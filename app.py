@@ -6,9 +6,14 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
 from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.utils import secure_filename
+from flask_wtf.csrf import CSRFProtect
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 import uuid
 import json
 import stripe
+import bleach
+# import magic  # Commented out for now due to system dependency
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
@@ -22,6 +27,14 @@ db = SQLAlchemy(model_class=Base)
 app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "your-secret-key-here")
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+
+# Security configurations
+csrf = CSRFProtect(app)
+limiter = Limiter(
+    key_func=get_remote_address,
+    default_limits=["200 per day", "50 per hour"]
+)
+limiter.init_app(app)
 
 # Configure the database
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///service_tracker.db")
@@ -56,6 +69,58 @@ task_manager = TaskTemplateManager()
 stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
 YOUR_DOMAIN = os.environ.get('REPLIT_DEV_DOMAIN', 'http://localhost:5000')
 
+# Security helper functions
+def sanitize_input(text):
+    """Sanitize user input to prevent XSS attacks"""
+    if not text:
+        return ''
+    return bleach.clean(text.strip(), tags=[], attributes={}, strip=True)
+
+def validate_file_upload(file):
+    """Validate uploaded files for security"""
+    if not file or not file.filename:
+        return False, "No file selected"
+    
+    # Check file size (16MB limit)
+    if len(file.read()) > 16 * 1024 * 1024:
+        file.seek(0)  # Reset file pointer
+        return False, "File too large (max 16MB)"
+    
+    file.seek(0)  # Reset file pointer
+    
+    # Basic file extension check (simplified without magic)
+    allowed_extensions = {'.jpg', '.jpeg', '.png', '.gif', '.webp'}
+    filename = file.filename.lower()
+    if not any(filename.endswith(ext) for ext in allowed_extensions):
+        return False, f"Invalid file type. Allowed: {', '.join(allowed_extensions)}"
+    
+    return True, "File is valid"
+
+def get_job_limits(subscription_tier='free'):
+    """Get job limits based on subscription tier"""
+    limits = {
+        'free': 5,
+        'starter': 50,
+        'professional': -1,  # unlimited
+        'enterprise': -1     # unlimited
+    }
+    return limits.get(subscription_tier, 5)
+
+def check_job_limit(user_tier='free'):
+    """Check if user has reached job creation limit"""
+    limit = get_job_limits(user_tier)
+    if limit == -1:  # unlimited
+        return True, ""
+    
+    # Count jobs created this month (simplified - in production use proper user tracking)
+    current_month = datetime.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    job_count = Job.query.filter(Job.created_at >= current_month).count()
+    
+    if job_count >= limit:
+        return False, f"Job limit reached ({limit} jobs per month). Upgrade your plan to create more jobs."
+    
+    return True, f"{job_count}/{limit} jobs used this month"
+
 @app.route('/')
 def index():
     return render_template('index.html', 
@@ -63,15 +128,22 @@ def index():
                          service_types=task_manager.get_service_types())
 
 @app.route('/submit_job', methods=['POST'])
+@limiter.limit("10 per minute")
 def submit_job():
     try:
-        # Get form data
-        client_name = request.form.get('client_name', '').strip()
-        service_provider_name = request.form.get('service_provider_name', '').strip()
-        job_address = request.form.get('job_address', '').strip()
-        reference_number = request.form.get('reference_number', '').strip()
+        # Get and sanitize form data
+        client_name = sanitize_input(request.form.get('client_name', ''))
+        service_provider_name = sanitize_input(request.form.get('service_provider_name', ''))
+        job_address = sanitize_input(request.form.get('job_address', ''))
+        reference_number = sanitize_input(request.form.get('reference_number', ''))
         service_area_size = int(request.form.get('service_area_size', 0))
-        service_type = request.form.get('service_type', '').strip()
+        service_type = sanitize_input(request.form.get('service_type', ''))
+        
+        # Check job creation limits (freemium model)
+        can_create, limit_message = check_job_limit('free')  # In production, get user's actual tier
+        if not can_create:
+            flash(limit_message, 'warning')
+            return redirect(url_for('pricing'))
         
         # Validation
         if not all([client_name, service_provider_name, job_address, service_area_size, service_type]):
@@ -171,6 +243,7 @@ def task_detail(job_id, task_index):
                          service_config=service_config.get_config())
 
 @app.route('/complete_task/<int:job_id>/<int:task_index>', methods=['POST'])
+@limiter.limit("20 per minute")
 def complete_task(job_id, task_index):
     try:
         job = Job.query.get_or_404(job_id)
@@ -182,28 +255,38 @@ def complete_task(job_id, task_index):
         
         task = tasks_data[task_index]
         
-        # Handle file uploads
+        # Handle file uploads with security validation
         before_photo = None
         after_photo = None
         
         if 'task_before_photo' in request.files:
             file = request.files['task_before_photo']
             if file.filename:
-                filename = secure_filename(f"{uuid.uuid4()}_{file.filename}")
-                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-                before_photo = filename
+                is_valid, error_msg = validate_file_upload(file)
+                if is_valid:
+                    filename = secure_filename(f"{uuid.uuid4()}_{file.filename}")
+                    file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                    before_photo = filename
+                else:
+                    flash(f'Before photo error: {error_msg}', 'error')
+                    return redirect(url_for('task_detail', job_id=job_id, task_index=task_index))
         
         if 'task_after_photo' in request.files:
             file = request.files['task_after_photo']
             if file.filename:
-                filename = secure_filename(f"{uuid.uuid4()}_{file.filename}")
-                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-                after_photo = filename
+                is_valid, error_msg = validate_file_upload(file)
+                if is_valid:
+                    filename = secure_filename(f"{uuid.uuid4()}_{file.filename}")
+                    file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                    after_photo = filename
+                else:
+                    flash(f'After photo error: {error_msg}', 'error')
+                    return redirect(url_for('task_detail', job_id=job_id, task_index=task_index))
         
-        # Get task timing and notes
+        # Get and sanitize task timing and notes
         actual_minutes = int(request.form.get('actual_minutes', task['estimated_minutes']))
-        notes = request.form.get('task_notes', '')
-        exceptions = request.form.get('exceptions', '')
+        notes = sanitize_input(request.form.get('task_notes', ''))
+        exceptions = sanitize_input(request.form.get('exceptions', ''))
         
         # Create completed task record
         completed_task = CompletedTask(
@@ -372,6 +455,7 @@ def performance():
                          service_config=service_config.get_config())
 
 @app.route('/api/chat', methods=['POST'])
+@limiter.limit("30 per minute")
 def chat_api():
     """Simple AI chat endpoint - replace with your preferred AI service"""
     if not request.json:
@@ -391,6 +475,7 @@ def pricing():
     return render_template('pricing.html', service_config=service_config.get_config())
 
 @app.route('/create-checkout-session', methods=['POST'])
+@limiter.limit("5 per minute")
 def create_checkout_session():
     """Create Stripe checkout session for subscription"""
     try:
@@ -441,6 +526,28 @@ def payment_cancel():
     """Handle cancelled payment"""
     flash('Payment was cancelled.', 'info')
     return redirect(url_for('pricing'))
+
+@app.route('/onboarding')
+def onboarding():
+    """Display onboarding wizard for new users"""
+    return render_template('onboarding.html', service_config=service_config.get_config())
+
+@app.route('/onboarding/step/<int:step>')
+def onboarding_step(step):
+    """Handle specific onboarding steps"""
+    if step == 1:
+        # Welcome and setup
+        return render_template('onboarding_step1.html', service_config=service_config.get_config())
+    elif step == 2:
+        # Industry selection
+        return render_template('onboarding_step2.html', 
+                             service_config=service_config.get_config(),
+                             service_types=task_manager.get_service_types())
+    elif step == 3:
+        # First job demo
+        return render_template('onboarding_step3.html', service_config=service_config.get_config())
+    else:
+        return redirect(url_for('index'))
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
