@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task {{ progress.current }} of {{ progress.total }} - {{ service_config.app_title }}</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/custom.css') }}" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <div class="logo-container me-4">
+                            <i class="fas fa-cogs fa-3x text-primary"></i>
+                        </div>
+                        <div class="border-start ps-4">
+                            <h1 class="display-6 mb-1">
+                                <i class="fas fa-tasks me-2"></i>
+                                {{ job_data.service_type|title }}
+                            </h1>
+                            <p class="text-muted mb-0">{{ job_data.client_name }} - {{ job_data.job_address }}{% if job_data.reference_number %} (Ref: {{ job_data.reference_number }}){% endif %}</p>
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <h6 class="mb-1">Task {{ progress.current }} of {{ progress.total }}</h6>
+                        <div class="progress" style="width: 200px;">
+                            <div class="progress-bar" role="progressbar" style="width: {{ progress.percentage }}%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{% if category == 'error' %}danger{% else %}{{ category }}{% endif %} alert-dismissible fade show" role="alert">
+                        <i class="fas fa-{% if category == 'error' %}exclamation-triangle{% else %}info-circle{% endif %} me-2"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Current Task -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-primary">
+                    <div class="card-header bg-primary bg-opacity-10">
+                        <h3 class="card-title mb-0">
+                            <i class="fas fa-check-square me-2"></i>
+                            {{ task.task }}
+                        </h3>
+                        <div class="mt-2">
+                            <span class="badge bg-info me-2">
+                                <i class="fas fa-clock me-1"></i>
+                                {{ task.estimated_minutes }} minutes
+                            </span>
+                            <span class="badge bg-secondary">
+                                <i class="fas fa-home me-1"></i>
+                                {{ "{:,}".format(job_data.service_area_size) }} {{ service_config.service_unit_abbr }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <h5><i class="fas fa-list-ul me-2"></i>Overview:</h5>
+                        <p class="lead">{{ task.instructions }}</p>
+                        
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <h6><i class="fas fa-cogs me-2"></i>Method:</h6>
+                                <p>{{ task.method }}</p>
+                                
+                                <h6><i class="fas fa-tools me-2"></i>Materials Needed:</h6>
+                                <ul class="list-unstyled">
+                                    {% for material in task.materials %}
+                                    <li><i class="fas fa-check-circle text-success me-2"></i>{{ material }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6><i class="fas fa-spray-can me-2"></i>Approved Products:</h6>
+                                <ul class="list-unstyled">
+                                    {% for product in task.approved_products %}
+                                    <li class="mb-1">{{ product }}</li>
+                                    {% endfor %}
+                                </ul>
+                                
+                                <div class="alert alert-warning mt-3">
+                                    <h6><i class="fas fa-exclamation-triangle me-2"></i>Safety & Precautions:</h6>
+                                    <p class="mb-0 small">{{ task.precautions }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Task Timer Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-info">
+                    <div class="card-header bg-info bg-opacity-10">
+                        <h4 class="card-title mb-0">
+                            <i class="fas fa-stopwatch me-2"></i>
+                            Task Timer & Documentation
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <form id="taskForm" action="{{ url_for('complete_task', job_id=job_data.id, task_index=task_index) }}" method="POST" enctype="multipart/form-data">
+                            <!-- Start Task Section -->
+                            <div id="start-task-section">
+                                <div class="text-center mb-4">
+                                    <h2 id="timer-display" class="display-4 mb-2">00:00:00</h2>
+                                    <p class="text-muted">
+                                        Estimated Time: <span class="badge bg-secondary">{{ task.estimated_minutes }} minutes</span>
+                                    </p>
+                                </div>
+                                
+                                <!-- Before Photo Section -->
+                                <div id="before-photo-section" class="mb-3">
+                                    <label for="task_before_photo" class="form-label">
+                                        <i class="fas fa-camera me-1"></i>
+                                        Take Before Photo (Required to Start)
+                                    </label>
+                                    <div class="d-grid">
+                                        <label for="task_before_photo" class="btn btn-outline-info btn-lg">
+                                            <i class="fas fa-camera-retro me-2"></i>
+                                            <span class="d-none d-sm-inline">Open Camera</span>
+                                            <span class="d-sm-none">Camera</span>
+                                        </label>
+                                    </div>
+                                    <input type="file" class="form-control d-none" id="task_before_photo" name="task_before_photo" accept="image/*" capture="environment" required>
+                                    <div class="form-text">Document the area before starting the task</div>
+                                    
+                                    <!-- Preview area -->
+                                    <div id="before_preview" class="mt-2" style="display: none;">
+                                        <img id="before_img" class="img-fluid rounded border" style="max-height: 200px;" alt="Before photo preview">
+                                    </div>
+                                </div>
+                                
+                                <div class="d-grid gap-2">
+                                    <button type="button" id="start-task-btn" class="btn btn-primary btn-lg btn-block" disabled>
+                                        <i class="fas fa-camera me-2"></i>
+                                        <span class="d-none d-sm-inline">Upload Before Photo & Start Task</span>
+                                        <span class="d-sm-none">Take Photo & Start</span>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Running Task Section -->
+                            <div id="timer-running-section" style="display: none;">
+                                <div class="text-center mb-4">
+                                    <h2 id="timer-display-running" class="display-4 mb-2">00:00:00</h2>
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-running me-2"></i>
+                                        Task in progress... Work according to instructions above.
+                                    </div>
+                                    <div id="overtime-alert" class="alert alert-warning mt-3" style="display: none;">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                        <strong>Time Exceeded!</strong> This task is taking longer than estimated.
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Complete Task Section -->
+                            <div id="complete-task-section" style="display: none;">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label for="task_after_photo" class="form-label">
+                                            <i class="fas fa-camera me-1"></i>
+                                            Take After Photo (Required) *
+                                        </label>
+                                        <div class="d-grid mb-3">
+                                            <label for="task_after_photo" class="btn btn-outline-success btn-lg">
+                                                <i class="fas fa-camera me-2"></i>
+                                                <span class="d-none d-sm-inline">Take After Photo</span>
+                                                <span class="d-sm-none">After Photo</span>
+                                            </label>
+                                        </div>
+                                        <input type="file" class="form-control d-none" id="task_after_photo" name="task_after_photo" accept="image/*" capture="environment" required>
+                                        
+                                        <div id="after_preview" class="mt-2" style="display: none;">
+                                            <img id="after_img" class="img-fluid rounded border" style="max-height: 200px;" alt="After photo preview">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <label for="task_notes" class="form-label">
+                                            <i class="fas fa-sticky-note me-1"></i>
+                                            Task Notes
+                                        </label>
+                                        <textarea class="form-control" id="task_notes" name="task_notes" rows="4" maxlength="500" placeholder="Any additional notes about this task..."></textarea>
+                                        
+                                        <label for="exceptions" class="form-label mt-3">
+                                            <i class="fas fa-exclamation-triangle me-1"></i>
+                                            Exceptions/Issues
+                                        </label>
+                                        <textarea class="form-control" id="exceptions" name="exceptions" rows="3" maxlength="500" placeholder="Any exceptions or issues encountered..."></textarea>
+                                    </div>
+                                </div>
+                                
+                                <!-- Hidden fields for timing -->
+                                <input type="hidden" id="actual_minutes" name="actual_minutes" value="">
+                                
+                                <div class="d-grid mt-4">
+                                    <button type="submit" id="complete-task-btn" class="btn btn-success btn-lg" disabled>
+                                        <i class="fas fa-check-circle me-2"></i>
+                                        Complete Task & Continue
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    
+    <script>
+        // Task-specific JavaScript
+        let taskTimer = null;
+        let startTime = null;
+        let estimatedMinutes = {{ task.estimated_minutes }};
+        
+        // Initialize task functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            setupTaskTimer();
+            setupPhotoHandling();
+        });
+        
+        function setupTaskTimer() {
+            const startBtn = document.getElementById('start-task-btn');
+            const beforePhotoInput = document.getElementById('task_before_photo');
+            const afterPhotoInput = document.getElementById('task_after_photo');
+            
+            // Enable start button when before photo is taken
+            beforePhotoInput.addEventListener('change', function() {
+                if (this.files && this.files[0]) {
+                    previewImage(this.files[0], 'before_preview', 'before_img');
+                    startBtn.disabled = false;
+                }
+            });
+            
+            // Start task timer
+            startBtn.addEventListener('click', function() {
+                startTaskTimer();
+            });
+            
+            // Handle after photo
+            afterPhotoInput.addEventListener('change', function() {
+                if (this.files && this.files[0]) {
+                    previewImage(this.files[0], 'after_preview', 'after_img');
+                    document.getElementById('complete-task-btn').disabled = false;
+                }
+            });
+        }
+        
+        function startTaskTimer() {
+            startTime = new Date();
+            document.getElementById('start-task-section').style.display = 'none';
+            document.getElementById('timer-running-section').style.display = 'block';
+            document.getElementById('complete-task-section').style.display = 'block';
+            
+            // Start timer
+            taskTimer = setInterval(updateTaskTimer, 1000);
+        }
+        
+        function updateTaskTimer() {
+            if (!startTime) return;
+            
+            const now = new Date();
+            const elapsed = Math.floor((now - startTime) / 1000);
+            const elapsedMinutes = Math.floor(elapsed / 60);
+            
+            // Update display
+            const hours = Math.floor(elapsed / 3600);
+            const minutes = Math.floor((elapsed % 3600) / 60);
+            const seconds = elapsed % 60;
+            
+            const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            document.getElementById('timer-display-running').textContent = timeString;
+            
+            // Show overtime alert if needed
+            if (elapsedMinutes > estimatedMinutes) {
+                document.getElementById('overtime-alert').style.display = 'block';
+            }
+            
+            // Update hidden field
+            document.getElementById('actual_minutes').value = elapsedMinutes || 1;
+        }
+        
+        function previewImage(file, containerId, imgId) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById(imgId).src = e.target.result;
+                document.getElementById(containerId).style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        function setupPhotoHandling() {
+            // Make file input labels trigger the hidden inputs
+            const beforeLabel = document.querySelector('label[for="task_before_photo"]');
+            const afterLabel = document.querySelector('label[for="task_after_photo"]');
+            
+            beforeLabel.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('task_before_photo').click();
+            });
+            
+            afterLabel.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('task_after_photo').click();
+            });
+        }
+    </script>
+</body>
+</html>

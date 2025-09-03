@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance Dashboard - {{ service_config.app_title }}</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/custom.css') }}" rel="stylesheet">
+    
+    <!-- Chart.js for visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container mt-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h1 class="display-5">
+                        <i class="fas fa-chart-line me-3"></i>
+                        Performance Analytics
+                    </h1>
+                    <a href="{{ url_for('index') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-home me-2"></i>
+                        Back to Home
+                    </a>
+                </div>
+                <p class="lead text-muted">Track team efficiency and service performance metrics</p>
+            </div>
+        </div>
+
+        <!-- Date Range Selector -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-calendar-alt me-2"></i>
+                                    Performance Period: <span class="text-primary">{{ period_label }}</span>
+                                </h5>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <div class="btn-group" role="group">
+                                    <a href="?period=week" class="btn btn-sm {% if period == 'week' %}btn-primary{% else %}btn-outline-primary{% endif %}">Week</a>
+                                    <a href="?period=month" class="btn btn-sm {% if period == 'month' %}btn-primary{% else %}btn-outline-primary{% endif %}">Month</a>
+                                    <a href="?period=all" class="btn btn-sm {% if period == 'all' %}btn-primary{% else %}btn-outline-primary{% endif %}">All Time</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Key Metrics Row -->
+        <div class="row mb-4">
+            <div class="col-md-3 mb-3">
+                <div class="card stat-card">
+                    <div class="card-body text-center">
+                        <i class="fas fa-briefcase fa-2x mb-3 text-primary"></i>
+                        <div class="metric-value">{{ metrics.total_jobs }}</div>
+                        <p class="text-muted mb-0">Total Jobs</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card stat-card">
+                    <div class="card-body text-center">
+                        <i class="fas fa-clock fa-2x mb-3 text-info"></i>
+                        <div class="metric-value">{{ metrics.avg_completion_time }}</div>
+                        <p class="text-muted mb-0">Avg Completion (min)</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card stat-card">
+                    <div class="card-body text-center">
+                        <i class="fas fa-percentage fa-2x mb-3 text-success"></i>
+                        <div class="metric-value">{{ metrics.efficiency_rate }}%</div>
+                        <p class="text-muted mb-0">Efficiency Rate</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card stat-card">
+                    <div class="card-body text-center">
+                        <i class="fas fa-ruler-combined fa-2x mb-3 text-warning"></i>
+                        <div class="metric-value">{{ "{:,}".format(metrics.total_sqft) }}</div>
+                        <p class="text-muted mb-0">Total {{ service_config.service_unit_abbr|title }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance by Service Provider -->
+        <div class="row mb-4">
+            <div class="col-lg-6 mb-3">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-user-clock me-2"></i>
+                            Performance by Service Provider
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if cleaner_stats %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Provider</th>
+                                        <th>Jobs</th>
+                                        <th>Avg Time</th>
+                                        <th>Efficiency</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for provider in cleaner_stats %}
+                                    <tr>
+                                        <td>
+                                            <i class="fas fa-user me-2"></i>
+                                            {{ provider.name }}
+                                        </td>
+                                        <td>{{ provider.job_count }}</td>
+                                        <td>{{ provider.avg_time }} min</td>
+                                        <td>
+                                            <span class="efficiency-indicator efficiency-{{ provider.efficiency_class }}"></span>
+                                            {{ provider.efficiency }}%
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No performance data available for the selected period.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Task Performance Analysis -->
+            <div class="col-lg-6 mb-3">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-tasks me-2"></i>
+                            Task Performance Analysis
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="taskPerformanceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Task-Level Breakdown -->
+        {% if task_breakdown %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-list-ul me-2"></i>
+                            Task-Level Performance Breakdown
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Task Name</th>
+                                        <th>Times Completed</th>
+                                        <th>Avg Estimated</th>
+                                        <th>Avg Actual</th>
+                                        <th>Variance</th>
+                                        <th>Performance</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for task in task_breakdown %}
+                                    <tr>
+                                        <td>{{ task.name }}</td>
+                                        <td>{{ task.count }}</td>
+                                        <td>{{ task.avg_estimated }} min</td>
+                                        <td>{{ task.avg_actual }} min</td>
+                                        <td>
+                                            {% if task.variance > 0 %}
+                                            <span class="text-warning">+{{ task.variance }} min</span>
+                                            {% else %}
+                                            <span class="text-success">{{ task.variance }} min</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="progress" style="height: 20px;">
+                                                <div class="progress-bar {% if task.performance >= 90 %}bg-success{% elif task.performance >= 75 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                                     style="width: {{ task.performance }}%">
+                                                    {{ task.performance }}%
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- No Data Message -->
+        {% if metrics.total_jobs == 0 %}
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-chart-bar fa-4x text-muted mb-4"></i>
+                        <h4>No Performance Data</h4>
+                        <p class="text-muted">Complete some service jobs to see performance analytics here.</p>
+                        <a href="{{ url_for('index') }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>
+                            Create Your First Job
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Initialize charts if we have data
+        document.addEventListener('DOMContentLoaded', function() {
+            {% if task_breakdown %}
+            initTaskPerformanceChart();
+            {% endif %}
+        });
+        
+        function initTaskPerformanceChart() {
+            const ctx = document.getElementById('taskPerformanceChart').getContext('2d');
+            
+            const taskData = [
+                {% for task in task_breakdown %}
+                {
+                    name: '{{ task.name }}',
+                    estimated: {{ task.avg_estimated }},
+                    actual: {{ task.avg_actual }},
+                    performance: {{ task.performance }}
+                }{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ];
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: taskData.map(t => t.name),
+                    datasets: [{
+                        label: 'Estimated Time (min)',
+                        data: taskData.map(t => t.estimated),
+                        backgroundColor: 'rgba(13, 110, 253, 0.7)',
+                        borderColor: 'rgba(13, 110, 253, 1)',
+                        borderWidth: 1
+                    }, {
+                        label: 'Actual Time (min)',
+                        data: taskData.map(t => t.actual),
+                        backgroundColor: 'rgba(25, 135, 84, 0.7)',
+                        borderColor: 'rgba(25, 135, 84, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Estimated vs Actual Time by Task'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Minutes'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
