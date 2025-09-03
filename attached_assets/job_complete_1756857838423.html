@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Complete - Drake's Precision Cleaning App</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Mobile Optimizations & Photo Comparison -->
+    <style>
+        /* Photo Comparison Styles */
+        .photo-comparison-container {
+            position: relative;
+            overflow: hidden;
+            cursor: ew-resize;
+            user-select: none;
+            max-width: 100%;
+            margin: 0 auto;
+        }
+        
+        .photo-comparison-container img {
+            display: block;
+            width: 100%;
+            height: auto;
+            max-height: 400px;
+            object-fit: cover;
+        }
+        
+        .photo-comparison-after {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            overflow: hidden;
+            width: 50%;
+        }
+        
+        .photo-comparison-slider {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            width: 4px;
+            background: var(--bs-primary);
+            cursor: ew-resize;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+        
+        .photo-comparison-slider::before {
+            content: '\2194';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--bs-primary);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        
+        .comparison-label {
+            position: absolute;
+            top: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        
+        .comparison-label.before {
+            left: 10px;
+        }
+        
+        .comparison-label.after {
+            right: 10px;
+        }
+        
+        /* Side by side view option */
+        .side-by-side-comparison {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .side-by-side-comparison > div {
+            flex: 1;
+            text-align: center;
+        }
+        
+        .side-by-side-comparison img {
+            width: 100%;
+            height: auto;
+            max-height: 300px;
+            object-fit: cover;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        @media (max-width: 768px) {
+            /* Large buttons for field use */
+            .btn {
+                min-height: 60px !important;
+                font-size: 1.2rem !important;
+                padding: 15px 20px !important;
+                margin-bottom: 10px;
+            }
+            
+            /* Stack stats on mobile */
+            .col-md-3 {
+                margin-bottom: 1rem;
+            }
+            
+            /* Photo gallery optimization */
+            .task-photos img {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+            
+            /* Better readability */
+            .h2, h2 {
+                font-size: 1.8rem !important;
+            }
+            
+            .card-title {
+                font-size: 1.3rem !important;
+            }
+            
+            /* Exception cards more visible */
+            .alert-warning {
+                border: 2px solid #ffc107;
+                font-size: 1.1rem;
+            }
+        }
+        
+        /* High contrast stats */
+        .display-5 {
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        
+        /* Photo comparison styles */
+        .photo-comparison {
+            position: relative;
+            overflow: hidden;
+            touch-action: pan-y;
+        }
+        
+        .photo-slider {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 50%;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12 text-center">
+                <div class="mb-4">
+                    <img src="{{ url_for('static', filename='drake_logo.png') }}" alt="Drake's Precision Clean Logo" style="height: 180px; filter: drop-shadow(0 3px 6px rgba(255,255,255,0.15));">
+                </div>
+                <h1 class="display-4 mb-2">
+                    <i class="fas fa-check-circle text-success me-3"></i>
+                    Job Complete!
+                </h1>
+                <p class="lead text-muted">All cleaning tasks have been documented and completed</p>
+            </div>
+        </div>
+
+        <!-- Job Summary -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title mb-0">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Job Summary
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong><i class="fas fa-user me-2"></i>Client:</strong> {{ job_data.client_name }}</p>
+                                <p><strong><i class="fas fa-map-marker-alt me-2"></i>Address:</strong> {{ job_data.job_address }}{% if job_data.lot_number %}<br><strong><i class="fas fa-hashtag me-2"></i>Lot Number:</strong> {{ job_data.lot_number }}{% endif %}</p>
+                                <p><strong><i class="fas fa-user-tie me-2"></i>Cleaner:</strong> {{ job_data.cleaner_name }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong><i class="fas fa-ruler-combined me-2"></i>Square Footage:</strong> {{ "{:,}".format(job_data.square_footage) }} sq ft</p>
+                                <p><strong><i class="fas fa-list me-2"></i>Cleaning Type:</strong> {{ job_data.cleaning_type }}</p>
+                                <p><strong><i class="fas fa-clock me-2"></i>Total Estimated Time:</strong> 
+                                    <span class="badge bg-primary fs-6">{{ job_data.total_estimated_hours }} hours ({{ job_data.total_estimated_minutes }} minutes)</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Overall Job Photos -->
+        {% if job_data.job_before_photo or job_data.job_after_photo %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title mb-0">
+                            <i class="fas fa-camera me-2"></i>
+                            Overall Job Photos
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            {% if job_data.job_before_photo %}
+                            <div class="col-md-6 mb-3">
+                                <h5><i class="fas fa-image me-2"></i>Job Before Photo</h5>
+                                <div class="text-center">
+                                    <img src="{{ url_for('static', filename='uploads/' + job_data.job_before_photo) }}" 
+                                         class="img-fluid rounded border" 
+                                         style="max-height: 300px; object-fit: cover;"
+                                         alt="Before cleaning photo">
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% if job_data.job_after_photo %}
+                            <div class="col-md-6 mb-3">
+                                <h5><i class="fas fa-image me-2"></i>Job After Photo</h5>
+                                <div class="text-center">
+                                    <img src="{{ url_for('static', filename='uploads/' + job_data.job_after_photo) }}" 
+                                         class="img-fluid rounded border" 
+                                         style="max-height: 300px; object-fit: cover;"
+                                         alt="After cleaning photo">
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Photo Transformation Gallery -->
+        {% set tasks_with_both_photos = job_data.completed_tasks | selectattr('before_photo') | selectattr('after_photo') | list %}
+        {% if tasks_with_both_photos %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-success">
+                    <div class="card-header bg-success bg-opacity-10">
+                        <h3 class="card-title mb-0">
+                            <i class="fas fa-magic me-2"></i>
+                            Visual Transformation Gallery
+                        </h3>
+                        <p class="mb-0 mt-1 text-muted">Interactive before/after comparison - drag the slider to reveal transformations</p>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info mb-3">
+                            <i class="fas fa-hand-pointer me-2"></i>
+                            <strong>Interactive:</strong> Click and drag the blue slider or tap on mobile to compare before and after photos
+                        </div>
+                        <!-- Display first task with photos as featured comparison -->
+                        {% set featured_task = tasks_with_both_photos[0] %}
+                        <div class="mb-4">
+                            <h5 class="text-center mb-3">
+                                <span class="badge bg-primary">Featured Transformation</span> 
+                                {{ featured_task.task_name }}
+                            </h5>
+                            <div class="photo-comparison-container" style="max-width: 800px; margin: 0 auto;">
+                                <img src="{{ url_for('static', filename='uploads/' + featured_task.before_photo) }}" alt="Before" class="photo-comparison-before">
+                                <div class="photo-comparison-after">
+                                    <img src="{{ url_for('static', filename='uploads/' + featured_task.after_photo) }}" alt="After">
+                                </div>
+                                <div class="photo-comparison-slider"></div>
+                                <span class="comparison-label before">BEFORE</span>
+                                <span class="comparison-label after">AFTER</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Quick transformation stats -->
+                        <div class="row text-center mt-4">
+                            <div class="col-md-4">
+                                <h4 class="text-success">{{ tasks_with_both_photos|length }}</h4>
+                                <p class="text-muted mb-0">Documented Transformations</p>
+                            </div>
+                            <div class="col-md-4">
+                                <h4 class="text-info">{{ "{:,}".format(job_data.square_footage) }}</h4>
+                                <p class="text-muted mb-0">Square Feet Transformed</p>
+                            </div>
+                            <div class="col-md-4">
+                                <h4 class="text-primary">100%</h4>
+                                <p class="text-muted mb-0">Quality Assured</p>
+                            </div>
+                        </div>
+                        
+                        <hr class="my-4">
+                        <p class="text-center text-muted mb-0">
+                            <i class="fas fa-info-circle me-2"></i>
+                            All individual task comparisons are shown below with detailed documentation
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Completed Tasks with Individual Photos -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title mb-0">
+                            <i class="fas fa-tasks me-2"></i>
+                            Completed Tasks with Documentation
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        {% for completed_task in job_data.completed_tasks %}
+                        <div class="card mb-3">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-check-square text-success me-2"></i>
+                                    Task {{ completed_task.task_index + 1 }}: {{ completed_task.task_name }}
+                                </h5>
+                                <div>
+                                    <span class="badge bg-secondary">Est: {{ completed_task.estimated_minutes }} min</span>
+                                    {% if completed_task.actual_minutes %}
+                                    <span class="badge {% if completed_task.actual_minutes > completed_task.estimated_minutes %}bg-warning{% else %}bg-success{% endif %}">
+                                        Actual: {{ completed_task.actual_minutes }} min
+                                    </span>
+                                    {% endif %}
+                                    {% if completed_task.time_extensions %}
+                                    <span class="badge bg-info" title="{{ completed_task.time_extensions|length }} extensions">
+                                        <i class="fas fa-clock"></i> +{{ completed_task.time_extensions|sum(attribute='additional_minutes', default=0) }} min
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                {% if completed_task.before_photo and completed_task.after_photo %}
+                                <!-- Photo Comparison View -->
+                                <div class="mb-3">
+                                    <div class="btn-group btn-group-sm mb-2" role="group">
+                                        <button type="button" class="btn btn-outline-primary comparison-toggle active" data-view="slider" data-task="{{ completed_task.task_index }}">
+                                            <i class="fas fa-sliders-h me-1"></i>Slider
+                                        </button>
+                                        <button type="button" class="btn btn-outline-primary comparison-toggle" data-view="side" data-task="{{ completed_task.task_index }}">
+                                            <i class="fas fa-columns me-1"></i>Side by Side
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- Slider View -->
+                                    <div class="photo-comparison-container" id="slider-{{ completed_task.task_index }}" data-task="{{ completed_task.task_index }}">
+                                        <img src="{{ url_for('static', filename='uploads/' + completed_task.before_photo) }}" alt="Before" class="photo-comparison-before">
+                                        <div class="photo-comparison-after">
+                                            <img src="{{ url_for('static', filename='uploads/' + completed_task.after_photo) }}" alt="After">
+                                        </div>
+                                        <div class="photo-comparison-slider"></div>
+                                        <span class="comparison-label before">BEFORE</span>
+                                        <span class="comparison-label after">AFTER</span>
+                                    </div>
+                                    
+                                    <!-- Side by Side View (hidden by default) -->
+                                    <div class="side-by-side-comparison" id="side-{{ completed_task.task_index }}" style="display: none;">
+                                        <div>
+                                            <h6 class="text-center mb-2"><i class="fas fa-arrow-left me-1"></i>Before</h6>
+                                            <img src="{{ url_for('static', filename='uploads/' + completed_task.before_photo) }}" alt="Before">
+                                        </div>
+                                        <div>
+                                            <h6 class="text-center mb-2">After<i class="fas fa-arrow-right ms-1"></i></h6>
+                                            <img src="{{ url_for('static', filename='uploads/' + completed_task.after_photo) }}" alt="After">
+                                        </div>
+                                    </div>
+                                </div>
+                                {% elif completed_task.before_photo or completed_task.after_photo %}
+                                <!-- Single photo display -->
+                                <div class="row">
+                                    {% if completed_task.before_photo %}
+                                    <div class="col-md-6 mb-2">
+                                        <h6><i class="fas fa-image me-2"></i>Before:</h6>
+                                        <img src="{{ url_for('static', filename='uploads/' + completed_task.before_photo) }}" 
+                                             class="img-fluid rounded border" 
+                                             style="max-height: 200px; object-fit: cover;"
+                                             alt="Task before photo">
+                                    </div>
+                                    {% endif %}
+                                    {% if completed_task.after_photo %}
+                                    <div class="col-md-6 mb-2">
+                                        <h6><i class="fas fa-image me-2"></i>After:</h6>
+                                        <img src="{{ url_for('static', filename='uploads/' + completed_task.after_photo) }}" 
+                                             class="img-fluid rounded border" 
+                                             style="max-height: 200px; object-fit: cover;"
+                                             alt="Task after photo">
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                {% else %}
+                                <p class="text-muted mb-0"><i class="fas fa-info-circle me-2"></i>No photos uploaded for this task</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+
+                        <!-- Summary Stats -->
+                        <div class="card bg-success bg-opacity-10 border-success">
+                            <div class="card-body text-center">
+                                <h4>
+                                    <i class="fas fa-trophy text-success me-2"></i>
+                                    Job Completed Successfully
+                                </h4>
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <h5 class="text-success">{{ job_data.completed_tasks|length }}</h5>
+                                        <p class="mb-0">Tasks Completed</p>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <h5 class="text-info">{{ job_data.total_estimated_hours }}</h5>
+                                        <p class="mb-0">Estimated Hours</p>
+                                    </div>
+                                    <div class="col-md-3">
+                                        {% set actual_total = job_data.completed_tasks | sum(attribute='actual_minutes', default=0) %}
+                                        {% if actual_total > 0 %}
+                                        <h5 class="text-warning">{{ (actual_total / 60) | round(2) }}</h5>
+                                        <p class="mb-0">Actual Hours</p>
+                                        {% else %}
+                                        <h5 class="text-success">{{ job_data.total_estimated_hours }}</h5>
+                                        <p class="mb-0">Total Hours</p>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-3">
+                                        <h5 class="text-success">{{ (job_data.completed_tasks | selectattr('before_photo') | list | length) + (job_data.completed_tasks | selectattr('after_photo') | list | length) }}</h5>
+                                        <p class="mb-0">Photos Documented</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Exceptions and Issues -->
+        {% if job_data.exceptions %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-warning">
+                    <div class="card-header bg-warning bg-opacity-10">
+                        <h3 class="card-title mb-0">
+                            <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                            Exceptions & Issues Notations
+                        </h3>
+                        <p class="mb-0 mt-2"><small class="text-muted">Issues that could not be resolved during cleaning and require follow-up</small></p>
+                    </div>
+                    <div class="card-body">
+                        {% for exception in job_data.exceptions %}
+                        <div class="card mb-3 border-warning">
+                            <div class="card-header">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h5 class="mb-1">
+                                            {{ exception.issue_type }}
+                                        </h5>
+                                        <p class="mb-1"><strong>Task:</strong> {{ exception.task_name }}</p>
+                                        <small class="text-muted">
+                                            <i class="fas fa-clock me-1"></i>{{ exception.timestamp }}
+                                            {% if exception.cleaner_initials %}
+                                            | <i class="fas fa-user me-1"></i>{{ exception.cleaner_initials }}
+                                            {% endif %}
+                                        </small>
+                                    </div>
+                                    <div class="text-end">
+                                        {% if exception.notified_client %}
+                                        <span class="badge bg-info">Client Notified</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">Client Not Notified</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <h6><i class="fas fa-info-circle me-2"></i>Description:</h6>
+                                        <p>{{ exception.description }}</p>
+                                        
+                                        {% if exception.recommended_action %}
+                                        <h6><i class="fas fa-lightbulb me-2"></i>Recommended Action:</h6>
+                                        <p class="text-primary">{{ exception.recommended_action }}</p>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-4">
+                                        {% if exception.exception_photo %}
+                                        <h6><i class="fas fa-camera me-2"></i>Photo Evidence:</h6>
+                                        <img src="{{ url_for('static', filename='uploads/' + exception.exception_photo) }}" 
+                                             class="img-fluid rounded border" 
+                                             style="max-height: 200px; object-fit: cover;"
+                                             alt="Exception photo evidence">
+                                        {% else %}
+                                        <div class="text-center text-muted">
+                                            <i class="fas fa-camera fa-2x mb-2"></i>
+                                            <p>No photo evidence</p>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+
+                        <!-- Exceptions Summary -->
+                        <div class="alert alert-warning">
+                            <h5><i class="fas fa-clipboard-list me-2"></i>Exception Summary</h5>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <strong>Total Exceptions:</strong> {{ job_data.exceptions|length }}
+                                </div>
+                                <div class="col-md-4">
+                                    <strong>Client Notified:</strong> {{ job_data.exceptions | selectattr('notified_client') | list | length }}
+                                </div>
+                                <div class="col-md-4">
+                                    <strong>With Photos:</strong> {{ job_data.exceptions | selectattr('exception_photo') | list | length }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- QR Code & PDF Export Section -->
+        <div class="row mb-4">
+            <div class="col-lg-6 mb-3">
+                <div class="card border-info">
+                    <div class="card-header bg-info bg-opacity-10">
+                        <h3 class="card-title mb-0">
+                            <i class="fas fa-qrcode me-2"></i>
+                            Quick Access QR Code
+                        </h3>
+                    </div>
+                    <div class="card-body text-center">
+                        {% if job_data.qr_code %}
+                        <img src="{{ job_data.qr_code }}" alt="QR Code" style="max-width: 250px;">
+                        <div class="mt-3">
+                            <p class="mb-2"><strong>Scan to View Report</strong></p>
+                            <small class="text-muted">
+                                Share this QR code with builders or clients for instant mobile access
+                            </small>
+                            <div class="mt-2">
+                                <code style="font-size: 0.8rem;">{{ job_data.report_url }}</code>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-6 mb-3">
+                <div class="card border-secondary">
+                    <div class="card-header bg-secondary bg-opacity-10">
+                        <h3 class="card-title mb-0">
+                            <i class="fas fa-file-pdf me-2"></i>
+                            Export Options
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-3">Generate professional PDF reports for printing, archiving, or email attachment.</p>
+                        
+                        {% if job_data.job_id %}
+                        <a href="{{ url_for('download_pdf', job_id=job_data.job_id) }}" 
+                           class="btn btn-danger btn-lg w-100 mb-3">
+                            <i class="fas fa-download me-2"></i>
+                            Download PDF Report
+                        </a>
+                        {% endif %}
+                        
+                        <button onclick="window.print()" class="btn btn-outline-secondary w-100">
+                            <i class="fas fa-print me-2"></i>
+                            Print This Page
+                        </button>
+                        
+                        <div class="mt-3">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                PDF includes all job details, completed tasks, and exception reports
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Email Report Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-primary">
+                    <div class="card-header bg-primary bg-opacity-10">
+                        <h3 class="card-title mb-0">
+                            <i class="fas fa-envelope me-2"></i>
+                            Send Job Report via Email
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row align-items-end">
+                            <div class="col-md-8">
+                                <label for="additional_email" class="form-label">
+                                    <i class="fas fa-at me-1"></i>
+                                    Additional Email Recipient (optional)
+                                </label>
+                                <input type="email" class="form-control" id="additional_email" 
+                                       placeholder="client@example.com">
+                                <div class="form-text">
+                                    Report will always be sent to <strong>drakesprecisioncleaning@gmail.com</strong>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <button id="send-report-btn" class="btn btn-success btn-lg w-100">
+                                    <i class="fas fa-paper-plane me-2"></i>
+                                    Send Report
+                                </button>
+                            </div>
+                        </div>
+                        <div id="email-status" class="mt-3" style="display: none;">
+                            <div class="alert" role="alert"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="row mb-4">
+            <div class="col-12 text-center">
+                <a href="{{ url_for('index') }}" class="btn btn-primary btn-lg btn-block mb-2">
+                    <i class="fas fa-plus me-2"></i>
+                    <span class="d-none d-sm-inline">Start New Job</span>
+                    <span class="d-sm-none">New Job</span>
+                </a>
+                <button onclick="window.print()" class="btn btn-outline-primary btn-lg btn-block">
+                    <i class="fas fa-print me-2"></i>
+                    <span class="d-none d-sm-inline">Print Job Report</span>
+                    <span class="d-sm-none">Print</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="row">
+            <div class="col-12 text-center">
+                <div class="card">
+                    <div class="card-body">
+                        <p class="mb-0 text-muted">
+                            <i class="fas fa-broom me-2"></i>
+                            Drake's Precision Cleaning - Professional Service Documentation
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Photo Comparison Script -->
+    <script>
+        // Photo comparison slider functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize all photo comparison sliders
+            const comparisons = document.querySelectorAll('.photo-comparison-container');
+            
+            comparisons.forEach(container => {
+                const slider = container.querySelector('.photo-comparison-slider');
+                const afterImage = container.querySelector('.photo-comparison-after');
+                let isActive = false;
+                
+                // Function to update slider position
+                function updateSliderPosition(x) {
+                    const rect = container.getBoundingClientRect();
+                    const position = Math.max(0, Math.min(x - rect.left, rect.width));
+                    const percentage = (position / rect.width) * 100;
+                    
+                    slider.style.left = percentage + '%';
+                    afterImage.style.width = percentage + '%';
+                }
+                
+                // Mouse events
+                container.addEventListener('mousedown', (e) => {
+                    isActive = true;
+                    updateSliderPosition(e.clientX);
+                });
+                
+                document.addEventListener('mousemove', (e) => {
+                    if (!isActive) return;
+                    e.preventDefault();
+                    updateSliderPosition(e.clientX);
+                });
+                
+                document.addEventListener('mouseup', () => {
+                    isActive = false;
+                });
+                
+                // Touch events for mobile
+                container.addEventListener('touchstart', (e) => {
+                    isActive = true;
+                    updateSliderPosition(e.touches[0].clientX);
+                });
+                
+                container.addEventListener('touchmove', (e) => {
+                    if (!isActive) return;
+                    e.preventDefault();
+                    updateSliderPosition(e.touches[0].clientX);
+                });
+                
+                container.addEventListener('touchend', () => {
+                    isActive = false;
+                });
+            });
+            
+            // Toggle between slider and side-by-side views
+            document.querySelectorAll('.comparison-toggle').forEach(button => {
+                button.addEventListener('click', function() {
+                    const view = this.dataset.view;
+                    const taskId = this.dataset.task;
+                    const sliderView = document.getElementById('slider-' + taskId);
+                    const sideView = document.getElementById('side-' + taskId);
+                    const buttons = this.parentElement.querySelectorAll('.comparison-toggle');
+                    
+                    // Update active button
+                    buttons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Show/hide views
+                    if (view === 'slider') {
+                        sliderView.style.display = 'block';
+                        sideView.style.display = 'none';
+                    } else {
+                        sliderView.style.display = 'none';
+                        sideView.style.display = 'flex';
+                    }
+                });
+            });
+        });
+    </script>
+    
+    <!-- Email Sending Script -->
+    <script>
+        document.getElementById('send-report-btn').addEventListener('click', async function() {
+            const btn = this;
+            const originalText = btn.innerHTML;
+            const additionalEmail = document.getElementById('additional_email').value.trim();
+            const statusDiv = document.getElementById('email-status');
+            const alertDiv = statusDiv.querySelector('.alert');
+            
+            // Disable button and show loading
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Sending...';
+            
+            try {
+                const response = await fetch('/send_report', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        additional_email: additionalEmail
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Success
+                    alertDiv.className = 'alert alert-success';
+                    alertDiv.innerHTML = `
+                        <i class="fas fa-check-circle me-2"></i>
+                        <strong>Success!</strong> ${data.message}
+                    `;
+                    statusDiv.style.display = 'block';
+                    
+                    // Clear additional email field
+                    document.getElementById('additional_email').value = '';
+                    
+                    // Keep button disabled for a moment to prevent double-sending
+                    setTimeout(() => {
+                        btn.disabled = false;
+                        btn.innerHTML = originalText;
+                    }, 3000);
+                } else {
+                    // Error
+                    alertDiv.className = 'alert alert-danger';
+                    alertDiv.innerHTML = `
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Error:</strong> ${data.error || 'Failed to send email. Please try again.'}
+                    `;
+                    statusDiv.style.display = 'block';
+                    
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                }
+            } catch (error) {
+                console.error('Error sending report:', error);
+                alertDiv.className = 'alert alert-danger';
+                alertDiv.innerHTML = `
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Error:</strong> An unexpected error occurred. Please try again.
+                `;
+                statusDiv.style.display = 'block';
+                
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        });
+        
+        // Validate email input
+        document.getElementById('additional_email').addEventListener('input', function() {
+            const email = this.value.trim();
+            if (email && !email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+                this.classList.add('is-invalid');
+            } else {
+                this.classList.remove('is-invalid');
+            }
+        });
+    </script>
+
+    <!-- Print Styles -->
+    <style>
+        @media print {
+            .btn {
+                display: none !important;
+            }
+            .card {
+                border: 1px solid #000 !important;
+                page-break-inside: avoid;
+            }
+            body {
+                background: white !important;
+                color: black !important;
+            }
+            .text-muted {
+                color: #666 !important;
+            }
+            .bg-success {
+                background-color: #e7f3e7 !important;
+            }
+            .text-success {
+                color: #2d5a2d !important;
+            }
+        }
+    </style>
+</body>
+</html>

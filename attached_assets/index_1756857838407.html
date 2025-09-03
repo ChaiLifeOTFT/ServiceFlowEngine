@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drake's Precision Cleaning App</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Mobile Optimizations for Construction Site Use -->
+    <style>
+        /* Mobile-First Enhancements */
+        @media (max-width: 768px) {
+            /* Bigger touch targets for gloved hands */
+            .btn {
+                min-height: 60px !important;
+                font-size: 1.2rem !important;
+                padding: 15px 20px !important;
+            }
+            
+            .form-control, .form-select {
+                height: 55px !important;
+                font-size: 1.1rem !important;
+            }
+            
+            /* Better outdoor visibility */
+            .card {
+                box-shadow: 0 0 20px rgba(0,0,0,0.8) !important;
+                border: 2px solid var(--bs-primary) !important;
+            }
+            
+            /* Logo optimization for mobile */
+            .logo-img {
+                height: 150px !important;
+            }
+            
+            /* Stack form fields on mobile */
+            .col-md-6 {
+                margin-bottom: 1rem;
+            }
+            
+            /* Larger icons */
+            .fas, .far {
+                font-size: 1.3em;
+            }
+            
+            /* High contrast text */
+            .form-label {
+                font-weight: bold !important;
+                font-size: 1.1rem !important;
+            }
+        }
+        
+        /* Touch-friendly spacing */
+        .mb-3 {
+            margin-bottom: 1.5rem !important;
+        }
+        
+        /* High contrast for outdoor use */
+        .btn-primary {
+            background: linear-gradient(135deg, #0d6efd 0%, #0056e0 100%);
+            border: 2px solid #0056e0;
+            font-weight: bold;
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #198754 0%, #157347 100%);
+            border: 2px solid #157347;
+            font-weight: bold;
+        }
+        
+        /* Loading states */
+        .btn:disabled {
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <!-- Header -->
+        <div class="row mb-5">
+            <div class="col-12 text-center">
+                <div class="mb-4">
+                    <img src="{{ url_for('static', filename='drake_logo.png') }}" alt="Drake's Precision Clean Logo" class="logo-img" style="height: 250px; filter: drop-shadow(0 3px 6px rgba(255,255,255,0.15));">
+                </div>
+                <p class="lead text-muted mt-3">Professional Job Time Estimation & Task Management</p>
+                <div class="mt-3">
+                    <a href="{{ url_for('performance') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-chart-line me-2"></i>
+                        View Performance Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{% if category == 'error' %}danger{% else %}{{ category }}{% endif %} alert-dismissible fade show" role="alert">
+                        <i class="fas fa-{% if category == 'error' %}exclamation-triangle{% else %}info-circle{% endif %} me-2"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Main Form -->
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title mb-0">
+                            <i class="fas fa-clipboard-list me-2"></i>
+                            New Cleaning Job Estimate
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <form action="{{ url_for('submit_job') }}" method="POST" enctype="multipart/form-data" id="jobForm">
+                            <!-- Client Information -->
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="client_name" class="form-label">
+                                        <i class="fas fa-user me-1"></i>
+                                        Client Name *
+                                    </label>
+                                    <input type="text" class="form-control" id="client_name" name="client_name" required maxlength="100">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="cleaner_name" class="form-label">
+                                        <i class="fas fa-user-tie me-1"></i>
+                                        Cleaner Name *
+                                    </label>
+                                    <input type="text" class="form-control" id="cleaner_name" name="cleaner_name" required maxlength="100">
+                                </div>
+                            </div>
+
+                            <!-- Job Address -->
+                            <div class="mb-3">
+                                <label for="job_address" class="form-label">
+                                    <i class="fas fa-map-marker-alt me-1"></i>
+                                    Job Address *
+                                </label>
+                                <input type="text" class="form-control" id="job_address" name="job_address" required maxlength="200">
+                            </div>
+
+                            <!-- Lot Number -->
+                            <div class="mb-3">
+                                <label for="lot_number" class="form-label">
+                                    <i class="fas fa-hashtag me-1"></i>
+                                    Lot Number
+                                </label>
+                                <input type="text" class="form-control" id="lot_number" name="lot_number" maxlength="50" placeholder="e.g., Lot 245, 3A, B12">
+                                <div class="form-text">Optional: Enter the lot number or unit identifier</div>
+                            </div>
+
+                            <!-- Job Details -->
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="square_footage" class="form-label">
+                                        <i class="fas fa-ruler-combined me-1"></i>
+                                        Square Footage *
+                                    </label>
+                                    <input type="number" class="form-control" id="square_footage" name="square_footage" required min="1" max="50000">
+                                    <div class="form-text">Enter total square footage to be cleaned</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="cleaning_type" class="form-label">
+                                        <i class="fas fa-list me-1"></i>
+                                        Cleaning Type *
+                                    </label>
+                                    <select class="form-select" id="cleaning_type" name="cleaning_type" required>
+                                        <option value="">Choose cleaning type...</option>
+                                        <option value="Rough Clean">Rough Clean</option>
+                                        <option value="Final Clean">Final Clean</option>
+                                        <option value="QC Clean">QC Clean</option>
+                                        <option value="Spec Clean">Spec Clean</option>
+                                    </select>
+                                </div>
+                            </div>
+
+
+                            <!-- Submit Button -->
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-lg btn-block">
+                                    <i class="fas fa-calculator me-2"></i>
+                                    <span class="d-none d-sm-inline">Calculate Time Estimate</span>
+                                    <span class="d-sm-none">Start Job</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Section -->
+        <div class="row mt-5">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">
+                            <i class="fas fa-info-circle me-2"></i>
+                            How It Works
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <i class="fas fa-clipboard-list fa-2x mb-2 text-primary"></i>
+                                <h6>1. Enter Job Details</h6>
+                                <p class="small text-muted">Fill in client information, address, and square footage</p>
+                            </div>
+                            <div class="col-md-4">
+                                <i class="fas fa-clock fa-2x mb-2 text-primary"></i>
+                                <h6>2. Get Time Estimates</h6>
+                                <p class="small text-muted">Receive detailed task breakdown with time estimates</p>
+                            </div>
+                            <div class="col-md-4">
+                                <i class="fas fa-camera fa-2x mb-2 text-primary"></i>
+                                <h6>3. Document Tasks</h6>
+                                <p class="small text-muted">Take before/after photos during each task execution</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Chat Assistant Bubble -->
+    <div id="ai-chat-bubble" class="position-fixed" style="bottom: 20px; right: 20px; z-index: 1050;">
+        <button type="button" class="btn btn-primary rounded-circle shadow-lg" style="width: 60px; height: 60px; animation: pulse-gentle 2s infinite;" data-bs-toggle="modal" data-bs-target="#aiChatModal">
+            <i class="fas fa-robot fa-lg"></i>
+        </button>
+    </div>
+
+    <!-- AI Chat Modal -->
+    <div class="modal fade" id="aiChatModal" tabindex="-1" aria-labelledby="aiChatModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content" style="height: 600px;">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="aiChatModalLabel">
+                        <i class="fas fa-robot me-2"></i>
+                        Drake's AI Cleaning Assistant
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body d-flex flex-column" style="height: 450px;">
+                    <!-- Chat Messages -->
+                    <div id="chatMessages" class="flex-grow-1 overflow-auto mb-3" style="max-height: 400px;">
+                        <div class="chat-message ai-message mb-3">
+                            <div class="d-flex align-items-start">
+                                <div class="flex-shrink-0 me-2">
+                                    <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                        <i class="fas fa-robot text-white"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="bg-light rounded p-3">
+                                        <p class="mb-0">Hi! I'm your AI cleaning assistant. Ask me anything about:</p>
+                                        <ul class="mb-0 mt-2">
+                                            <li>Product recommendations</li>
+                                            <li>Cleaning procedures</li>
+                                            <li>Safety guidelines</li>
+                                            <li>Best practices</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Input Area -->
+                    <div class="border-top pt-3">
+                        <div class="input-group">
+                            <input type="text" id="chatInput" class="form-control" placeholder="Ask about cleaning products, techniques, safety..." maxlength="500">
+                            <button type="button" id="sendChatBtn" class="btn btn-primary">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                        <div class="d-flex justify-content-between mt-2">
+                            <small class="text-muted">Press Enter to send</small>
+                            <div>
+                                <button type="button" class="btn btn-sm btn-outline-secondary me-2" onclick="insertQuickQuestion('What Zep products should I use for Final Clean?')">Quick: Product Help</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="insertQuickQuestion('How long does a typical cleaning job take?')">Quick: Time Estimates</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Your AI assistant for professional cleaning advice and support
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Chat Styles -->
+    <style>
+        @keyframes pulse-gentle {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .chat-message.user-message .message-content {
+            background-color: var(--bs-primary);
+            color: white;
+            margin-left: auto;
+            max-width: 80%;
+        }
+        
+        .chat-message.ai-message .message-content {
+            background-color: var(--bs-light);
+            max-width: 80%;
+        }
+        
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+        }
+        
+        .typing-indicator span {
+            height: 8px;
+            width: 8px;
+            background-color: #999;
+            border-radius: 50%;
+            display: inline-block;
+            margin: 0 2px;
+            animation: typing 1.4s infinite;
+        }
+        
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+            }
+            30% {
+                transform: translateY(-10px);
+            }
+        }
+        
+        #chatMessages {
+            scroll-behavior: smooth;
+        }
+    </style>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- AI Chat Script -->
+    <script>
+        const chatMessages = document.getElementById('chatMessages');
+        const chatInput = document.getElementById('chatInput');
+        const sendChatBtn = document.getElementById('sendChatBtn');
+        
+        // Auto-scroll to bottom of chat
+        function scrollToBottom() {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        // Add message to chat
+        function addMessage(content, isUser = false, isTyping = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `chat-message ${isUser ? 'user-message' : 'ai-message'} mb-3`;
+            
+            if (isUser) {
+                messageDiv.innerHTML = `
+                    <div class="d-flex justify-content-end">
+                        <div class="message-content bg-primary text-white rounded p-3" style="max-width: 80%;">
+                            ${content}
+                        </div>
+                    </div>
+                `;
+            } else {
+                if (isTyping) {
+                    messageDiv.innerHTML = `
+                        <div class="d-flex align-items-start">
+                            <div class="flex-shrink-0 me-2">
+                                <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                    <i class="fas fa-robot text-white"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="bg-light rounded p-3">
+                                    <div class="typing-indicator">
+                                        <span></span>
+                                        <span></span>
+                                        <span></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    messageDiv.innerHTML = `
+                        <div class="d-flex align-items-start">
+                            <div class="flex-shrink-0 me-2">
+                                <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                    <i class="fas fa-robot text-white"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="bg-light rounded p-3">
+                                    ${content}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            
+            chatMessages.appendChild(messageDiv);
+            scrollToBottom();
+            return messageDiv;
+        }
+        
+        // Send message to AI
+        async function sendMessage() {
+            const message = chatInput.value.trim();
+            if (!message) return;
+            
+            // Add user message
+            addMessage(message, true);
+            
+            // Clear input
+            chatInput.value = '';
+            
+            // Show typing indicator
+            const typingMessage = addMessage('', false, true);
+            
+            // Disable input during request
+            chatInput.disabled = true;
+            sendChatBtn.disabled = true;
+            
+            try {
+                const response = await fetch('/ai_chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        current_task: 'General cleaning inquiry'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                // Remove typing indicator
+                typingMessage.remove();
+                
+                if (data.success) {
+                    // Add AI response
+                    addMessage(data.message.replace(/\n/g, '<br>'));
+                    
+                    // Add citations if available
+                    if (data.citations && data.citations.length > 0) {
+                        const citationsText = '<hr><small class="text-muted"><strong>Sources:</strong><br>' + 
+                            data.citations.map(citation => `• <a href="${citation}" target="_blank" class="text-decoration-none">${citation}</a>`).join('<br>') + 
+                            '</small>';
+                        addMessage(citationsText);
+                    }
+                } else {
+                    addMessage('Sorry, I encountered an error. Please try again.', false);
+                }
+                
+            } catch (error) {
+                console.error('Chat error:', error);
+                typingMessage.remove();
+                addMessage('Sorry, I\'m having trouble connecting. Please check your internet connection and try again.', false);
+            }
+            
+            // Re-enable input
+            chatInput.disabled = false;
+            sendChatBtn.disabled = false;
+            chatInput.focus();
+        }
+        
+        // Event listeners
+        sendChatBtn.addEventListener('click', sendMessage);
+        
+        chatInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+        
+        // Quick question insertion
+        function insertQuickQuestion(question) {
+            chatInput.value = question;
+            chatInput.focus();
+        }
+        
+        // Make function globally available
+        window.insertQuickQuestion = insertQuickQuestion;
+        
+        // Focus input when modal opens
+        document.getElementById('aiChatModal').addEventListener('shown.bs.modal', function() {
+            chatInput.focus();
+        });
+    </script>
+    
+    <!-- Form Validation -->
+    <script>
+        document.getElementById('jobForm').addEventListener('submit', function(e) {
+            const squareFootage = document.getElementById('square_footage').value;
+            const cleaningType = document.getElementById('cleaning_type').value;
+            
+            if (!squareFootage || squareFootage <= 0) {
+                e.preventDefault();
+                alert('Please enter a valid square footage greater than 0.');
+                return;
+            }
+            
+            if (!cleaningType) {
+                e.preventDefault();
+                alert('Please select a cleaning type.');
+                return;
+            }
+        });
+
+    </script>
+</body>
+</html>
