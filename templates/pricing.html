@@ -64,6 +64,7 @@
                     </div>
                     <div class="card-footer">
                         <form action="{{ url_for('create_checkout_session') }}" method="POST">
+                            {{ csrf_token() }}
                             <input type="hidden" name="price_id" value="price_starter_monthly">
                             <button type="submit" class="btn btn-outline-primary w-100">
                                 <i class="fas fa-shopping-cart me-2"></i>
@@ -98,6 +99,7 @@
                     </div>
                     <div class="card-footer">
                         <form action="{{ url_for('create_checkout_session') }}" method="POST">
+                            {{ csrf_token() }}
                             <input type="hidden" name="price_id" value="price_professional_monthly">
                             <button type="submit" class="btn btn-primary w-100">
                                 <i class="fas fa-star me-2"></i>
@@ -131,6 +133,7 @@
                     </div>
                     <div class="card-footer">
                         <form action="{{ url_for('create_checkout_session') }}" method="POST">
+                            {{ csrf_token() }}
                             <input type="hidden" name="price_id" value="price_enterprise_monthly">
                             <button type="submit" class="btn btn-outline-warning w-100">
                                 <i class="fas fa-building me-2"></i>

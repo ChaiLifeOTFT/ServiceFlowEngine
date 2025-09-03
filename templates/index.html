@@ -62,6 +62,7 @@
                     </div>
                     <div class="card-body">
                         <form action="{{ url_for('submit_job') }}" method="POST" enctype="multipart/form-data" id="jobForm">
+                            {{ csrf_token() }}
                             <!-- Client Information -->
                             <div class="row mb-3">
                                 <div class="col-md-6">

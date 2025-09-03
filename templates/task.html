@@ -128,6 +128,7 @@
                     </div>
                     <div class="card-body">
                         <form id="taskForm" action="{{ url_for('complete_task', job_id=job_data.id, task_index=task_index) }}" method="POST" enctype="multipart/form-data">
+                            {{ csrf_token() }}
                             <!-- Start Task Section -->
                             <div id="start-task-section">
                                 <div class="text-center mb-4">
@@ -253,10 +254,20 @@
             setupPhotoHandling();
         });
         
+        // Clean up timer when leaving page
+        window.addEventListener('beforeunload', function() {
+            if (taskTimer) {
+                clearInterval(taskTimer);
+                taskTimer = null;
+            }
+        });
+        
         function setupTaskTimer() {
             const startBtn = document.getElementById('start-task-btn');
             const beforePhotoInput = document.getElementById('task_before_photo');
             const afterPhotoInput = document.getElementById('task_after_photo');
+            const completeBtn = document.getElementById('complete-task-btn');
+            const taskForm = document.querySelector('form');
             
             // Enable start button when before photo is taken
             beforePhotoInput.addEventListener('change', function() {
@@ -275,8 +286,48 @@
             afterPhotoInput.addEventListener('change', function() {
                 if (this.files && this.files[0]) {
                     previewImage(this.files[0], 'after_preview', 'after_img');
-                    document.getElementById('complete-task-btn').disabled = false;
+                    completeBtn.disabled = false;
                 }
+            });
+            
+            // Stop timer and validate before form submission
+            taskForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Stop the timer first
+                if (taskTimer) {
+                    clearInterval(taskTimer);
+                    taskTimer = null;
+                    
+                    // Final time calculation
+                    if (startTime) {
+                        const now = new Date();
+                        const elapsed = Math.floor((now - startTime) / 1000);
+                        const elapsedMinutes = Math.max(Math.floor(elapsed / 60), 1);
+                        document.getElementById('actual_minutes').value = elapsedMinutes;
+                    }
+                }
+                
+                // Validate required fields
+                const afterPhoto = document.getElementById('task_after_photo').files[0];
+                const actualMinutes = document.getElementById('actual_minutes').value;
+                
+                if (!afterPhoto) {
+                    alert('Please take an after photo before completing the task.');
+                    return false;
+                }
+                
+                if (!actualMinutes || actualMinutes < 1) {
+                    alert('Timer error: Please restart the task or contact support.');
+                    return false;
+                }
+                
+                // Show loading state
+                completeBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Completing Task...';
+                completeBtn.disabled = true;
+                
+                // Submit the form
+                this.submit();
             });
         }
         
@@ -291,27 +342,46 @@
         }
         
         function updateTaskTimer() {
-            if (!startTime) return;
+            if (!startTime || !taskTimer) return;
             
-            const now = new Date();
-            const elapsed = Math.floor((now - startTime) / 1000);
-            const elapsedMinutes = Math.floor(elapsed / 60);
-            
-            // Update display
-            const hours = Math.floor(elapsed / 3600);
-            const minutes = Math.floor((elapsed % 3600) / 60);
-            const seconds = elapsed % 60;
-            
-            const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-            document.getElementById('timer-display-running').textContent = timeString;
-            
-            // Show overtime alert if needed
-            if (elapsedMinutes > estimatedMinutes) {
-                document.getElementById('overtime-alert').style.display = 'block';
+            try {
+                const now = new Date();
+                const elapsed = Math.floor((now - startTime) / 1000);
+                const elapsedMinutes = Math.floor(elapsed / 60);
+                
+                // Update display
+                const hours = Math.floor(elapsed / 3600);
+                const minutes = Math.floor((elapsed % 3600) / 60);
+                const seconds = elapsed % 60;
+                
+                const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                const timerDisplay = document.getElementById('timer-display-running');
+                if (timerDisplay) {
+                    timerDisplay.textContent = timeString;
+                }
+                
+                // Show overtime alert if needed
+                if (elapsedMinutes > estimatedMinutes) {
+                    const overtimeAlert = document.getElementById('overtime-alert');
+                    if (overtimeAlert) {
+                        overtimeAlert.style.display = 'block';
+                    }
+                }
+                
+                // Update hidden field with validation
+                const actualMinutesField = document.getElementById('actual_minutes');
+                if (actualMinutesField) {
+                    actualMinutesField.value = Math.max(elapsedMinutes, 1);
+                }
+            } catch (error) {
+                console.error('Timer update error:', error);
+                // Stop timer on error to prevent further issues
+                if (taskTimer) {
+                    clearInterval(taskTimer);
+                    taskTimer = null;
+                }
             }
-            
-            // Update hidden field
-            document.getElementById('actual_minutes').value = elapsedMinutes || 1;
         }
         
         function previewImage(file, containerId, imgId) {
