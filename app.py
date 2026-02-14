@@ -549,5 +549,10 @@ def onboarding_step(step):
     else:
         return redirect(url_for('index'))
 
+@app.route('/health')
+@limiter.exempt
+def health_check():
+    return jsonify({"status": "healthy", "service": "ServiceFlowEngine"})
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
