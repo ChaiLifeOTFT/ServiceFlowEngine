@@ -1,5 +1,7 @@
 import os
 import logging
+from dotenv import load_dotenv
+load_dotenv()
 from datetime import datetime, timedelta
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session
 from flask_sqlalchemy import SQLAlchemy
@@ -67,7 +69,7 @@ task_manager = TaskTemplateManager()
 
 # Initialize Stripe
 stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
-YOUR_DOMAIN = os.environ.get('REPLIT_DEV_DOMAIN', 'http://localhost:5000')
+YOUR_DOMAIN = os.environ.get('SFE_DOMAIN', 'http://localhost:5080')
 
 # Security helper functions
 def sanitize_input(text):
@@ -549,10 +551,17 @@ def onboarding_step(step):
     else:
         return redirect(url_for('index'))
 
+@app.route('/landing')
+@limiter.exempt
+def landing():
+    """Public landing page for prospective customers"""
+    return render_template('landing.html', service_config=service_config.get_config())
+
 @app.route('/health')
 @limiter.exempt
 def health_check():
     return jsonify({"status": "healthy", "service": "ServiceFlowEngine"})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    port = int(os.environ.get('SFE_PORT', 5080))
+    app.run(host='0.0.0.0', port=port, debug=True)

@@ -1,34 +1,65 @@
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="dark">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#0d6efd">
+    <meta name="theme-color" content="#06060c">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="manifest" href="/static/manifest.json">
     <link rel="apple-touch-icon" href="/static/icon-192.png">
     <title>Pricing - {{ service_config.app_title }}</title>
-    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/custom.css') }}" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;600&family=Space+Grotesk:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/solpunk.css') }}" rel="stylesheet">
+    <style>
+        .sp-price { font-family: var(--sp-mono); font-size: 2.5rem; font-weight: 600; }
+        .sp-price-period { font-size: 0.85em; color: var(--sp-text-muted); }
+        .sp-feature-list { list-style: none; padding: 0; margin: 16px 0; }
+        .sp-feature-list li { padding: 6px 0; font-size: 0.88em; color: var(--sp-text); }
+        .sp-feature-list li::before { content: '\2713 '; color: var(--sp-green); margin-right: 8px; font-weight: 600; }
+        .sp-pricing-card { display: flex; flex-direction: column; height: 100%; }
+        .sp-pricing-card .sp-card-body { flex: 1; }
+        .sp-pricing-featured { border-color: var(--sp-violet) !important; border-width: 2px !important; }
+        .sp-accordion { margin-top: 8px; }
+        .sp-accordion-item { border-bottom: 1px solid var(--sp-border-soft); }
+        .sp-accordion-btn { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 14px 0; background: none; border: none; color: var(--sp-text); font-family: var(--sp-sans); font-size: 0.92em; cursor: pointer; text-align: left; transition: color 0.2s; }
+        .sp-accordion-btn:hover { color: var(--sp-violet); }
+        .sp-accordion-btn::after { content: '+'; font-family: var(--sp-mono); font-size: 1.2em; color: var(--sp-text-dim); transition: transform 0.2s; }
+        .sp-accordion-item.open .sp-accordion-btn::after { content: '-'; }
+        .sp-accordion-body { display: none; padding: 0 0 14px; font-size: 0.88em; color: var(--sp-text-muted); line-height: 1.7; }
+        .sp-accordion-item.open .sp-accordion-body { display: block; }
+        /* Alert styles */
+        .sp-alert { padding: 12px 18px; border-radius: var(--sp-radius); margin-bottom: 16px; font-size: 0.88em; display: flex; align-items: center; gap: 10px; animation: sp-fadeIn 0.3s ease-out; }
+        .sp-alert-error { background: rgba(255,107,107,0.12); border: 1px solid rgba(255,107,107,0.25); color: var(--sp-coral); }
+        .sp-alert-success { background: rgba(0,255,136,0.1); border: 1px solid rgba(0,255,136,0.2); color: var(--sp-green); }
+        .sp-alert-warning { background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.2); color: var(--sp-gold); }
+        .sp-alert-info { background: rgba(70,130,230,0.1); border: 1px solid rgba(70,130,230,0.2); color: var(--sp-blue); }
+        .sp-alert-close { margin-left: auto; background: none; border: none; color: inherit; cursor: pointer; opacity: 0.6; }
+        .sp-alert-close:hover { opacity: 1; }
+    </style>
 </head>
 <body>
-    <div class="container mt-4">
+    <div class="sp-container">
+        <!-- Accessibility Bar -->
+        <div class="sp-a11y-bar" role="toolbar" aria-label="Accessibility options">
+            <label><input type="checkbox" onchange="document.body.classList.toggle('sp-adhd')"> ADHD Mode</label>
+            <div class="sp-a11y-sep"></div>
+            <label><input type="checkbox" onchange="document.body.classList.toggle('sp-hc')"> High Contrast</label>
+            <div class="sp-a11y-sep"></div>
+            <select onchange="document.body.className=document.body.className.replace(/sp-text-\w+/g,'');if(this.value)document.body.classList.add(this.value)" aria-label="Text size">
+                <option value="">Text Size</option>
+                <option value="sp-text-lg">Large</option>
+                <option value="sp-text-xl">X-Large</option>
+            </select>
+        </div>
+
         <!-- Header -->
-        <div class="row mb-5">
-            <div class="col-12 text-center">
-                <div class="mb-4">
-                    <i class="fas fa-cogs fa-5x text-primary mb-3"></i>
-                </div>
-                <h1 class="display-4 mb-2">{{ service_config.company_name }}</h1>
-                <p class="lead text-muted mt-3">Choose the perfect plan for your service business</p>
-                <div class="mt-3">
-                    <a href="{{ url_for('index') }}" class="btn btn-outline-primary">
-                        <i class="fas fa-arrow-left me-2"></i>
-                        Back to App
-                    </a>
-                </div>
+        <div class="sp-section sp-text-center">
+            <div style="font-size: 3rem; margin-bottom: 12px;">&#9881;</div>
+            <h1>{{ service_config.company_name }}</h1>
+            <p class="sp-text-muted" style="margin-top: 8px;">Choose the perfect plan for your service business</p>
+            <div class="sp-mt-2">
+                <a href="{{ url_for('index') }}" class="sp-btn sp-btn--ghost">&#8592; Back to App</a>
             </div>
         </div>
 
@@ -36,217 +67,155 @@
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <div class="alert alert-{% if category == 'error' %}danger{% else %}{{ category }}{% endif %} alert-dismissible fade show" role="alert">
-                        <i class="fas fa-{% if category == 'error' %}exclamation-triangle{% else %}info-circle{% endif %} me-2"></i>
+                    <div class="sp-alert sp-alert-{% if category == 'error' %}error{% else %}{{ category }}{% endif %}" role="alert">
+                        <span>{% if category == 'error' %}&#9888;{% else %}&#8505;{% endif %}</span>
                         {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        <button class="sp-alert-close" onclick="this.parentElement.remove()" aria-label="Close">&times;</button>
                     </div>
                 {% endfor %}
             {% endif %}
         {% endwith %}
 
         <!-- Pricing Cards -->
-        <div class="row justify-content-center">
+        <div class="sp-grid sp-grid-3 sp-section">
             <!-- Starter Plan -->
-            <div class="col-lg-4 col-md-6 mb-4">
-                <div class="card h-100">
-                    <div class="card-header text-center bg-secondary bg-opacity-10">
-                        <h3 class="card-title mb-0">Starter</h3>
-                        <p class="text-muted">Perfect for small businesses</p>
-                    </div>
-                    <div class="card-body text-center">
-                        <div class="display-4 text-primary mb-3">$29</div>
-                        <p class="text-muted">per month</p>
-                        
-                        <ul class="list-unstyled mt-4 mb-4">
-                            <li><i class="fas fa-check text-success me-2"></i>Up to 50 jobs per month</li>
-                            <li><i class="fas fa-check text-success me-2"></i>Basic task templates</li>
-                            <li><i class="fas fa-check text-success me-2"></i>Photo documentation</li>
-                            <li><i class="fas fa-check text-success me-2"></i>Performance analytics</li>
-                            <li><i class="fas fa-check text-success me-2"></i>Email notifications</li>
-                            <li><i class="fas fa-check text-success me-2"></i>Mobile optimization</li>
-                        </ul>
-                    </div>
-                    <div class="card-footer">
-                        <form action="{{ url_for('create_checkout_session') }}" method="POST">
-                            {{ csrf_token() }}
-                            <input type="hidden" name="price_id" value="price_starter_monthly">
-                            <button type="submit" class="btn btn-outline-primary w-100">
-                                <i class="fas fa-shopping-cart me-2"></i>
-                                Choose Starter
-                            </button>
-                        </form>
-                    </div>
+            <div class="sp-card sp-pricing-card">
+                <div class="sp-text-center" style="padding-bottom: 12px; border-bottom: 1px solid var(--sp-border-soft);">
+                    <h3>Starter</h3>
+                    <p class="sp-text-muted" style="font-size: 0.82em;">Perfect for small businesses</p>
                 </div>
+                <div class="sp-card-body sp-text-center">
+                    <div class="sp-price sp-text-violet sp-mt-2">$29</div>
+                    <p class="sp-price-period">per month</p>
+                    <ul class="sp-feature-list">
+                        <li>Up to 50 jobs per month</li>
+                        <li>Basic task templates</li>
+                        <li>Photo documentation</li>
+                        <li>Performance analytics</li>
+                        <li>Email notifications</li>
+                        <li>Mobile optimization</li>
+                    </ul>
+                </div>
+                <form action="{{ url_for('create_checkout_session') }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="price_id" value="price_1TFfyMQUa1vRGKtTqNTkracr">
+                    <button type="submit" class="sp-btn sp-btn--ghost" style="width: 100%; justify-content: center;">&#128722; Choose Starter</button>
+                </form>
             </div>
 
             <!-- Professional Plan -->
-            <div class="col-lg-4 col-md-6 mb-4">
-                <div class="card h-100 border-primary">
-                    <div class="card-header text-center bg-primary bg-opacity-10">
-                        <h3 class="card-title mb-0">Professional</h3>
-                        <p class="text-muted">Most popular choice</p>
-                        <span class="badge bg-primary">Recommended</span>
-                    </div>
-                    <div class="card-body text-center">
-                        <div class="display-4 text-primary mb-3">$79</div>
-                        <p class="text-muted">per month</p>
-                        
-                        <ul class="list-unstyled mt-4 mb-4">
-                            <li><i class="fas fa-check text-success me-2"></i>Unlimited jobs</li>
-                            <li><i class="fas fa-check text-success me-2"></i>All task templates</li>
-                            <li><i class="fas fa-check text-success me-2"></i>Advanced analytics</li>
-                            <li><i class="fas fa-check text-success me-2"></i>Custom branding</li>
-                            <li><i class="fas fa-check text-success me-2"></i>API access</li>
-                            <li><i class="fas fa-check text-success me-2"></i>Priority support</li>
-                            <li><i class="fas fa-check text-success me-2"></i>Team collaboration</li>
-                        </ul>
-                    </div>
-                    <div class="card-footer">
-                        <form action="{{ url_for('create_checkout_session') }}" method="POST">
-                            {{ csrf_token() }}
-                            <input type="hidden" name="price_id" value="price_professional_monthly">
-                            <button type="submit" class="btn btn-primary w-100">
-                                <i class="fas fa-star me-2"></i>
-                                Choose Professional
-                            </button>
-                        </form>
-                    </div>
+            <div class="sp-card sp-pricing-card sp-pricing-featured">
+                <div class="sp-text-center" style="padding-bottom: 12px; border-bottom: 1px solid var(--sp-border-soft);">
+                    <h3>Professional</h3>
+                    <p class="sp-text-muted" style="font-size: 0.82em;">Most popular choice</p>
+                    <span class="sp-badge sp-badge--active">Recommended</span>
                 </div>
+                <div class="sp-card-body sp-text-center">
+                    <div class="sp-price sp-text-violet sp-mt-2">$49</div>
+                    <p class="sp-price-period">per month</p>
+                    <ul class="sp-feature-list">
+                        <li>Unlimited jobs</li>
+                        <li>All task templates</li>
+                        <li>Advanced analytics</li>
+                        <li>Custom branding</li>
+                        <li>API access</li>
+                        <li>Priority support</li>
+                        <li>Team collaboration</li>
+                    </ul>
+                </div>
+                <form action="{{ url_for('create_checkout_session') }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="price_id" value="price_1TFfyMQUa1vRGKtTJ101fpF1">
+                    <button type="submit" class="sp-btn" style="width: 100%; justify-content: center;">&#11088; Choose Professional</button>
+                </form>
             </div>
 
             <!-- Enterprise Plan -->
-            <div class="col-lg-4 col-md-6 mb-4">
-                <div class="card h-100">
-                    <div class="card-header text-center bg-warning bg-opacity-10">
-                        <h3 class="card-title mb-0">Enterprise</h3>
-                        <p class="text-muted">For large organizations</p>
-                    </div>
-                    <div class="card-body text-center">
-                        <div class="display-4 text-primary mb-3">$199</div>
-                        <p class="text-muted">per month</p>
-                        
-                        <ul class="list-unstyled mt-4 mb-4">
-                            <li><i class="fas fa-check text-success me-2"></i>Everything in Professional</li>
-                            <li><i class="fas fa-check text-success me-2"></i>Multi-location support</li>
-                            <li><i class="fas fa-check text-success me-2"></i>Advanced reporting</li>
-                            <li><i class="fas fa-check text-success me-2"></i>Custom integrations</li>
-                            <li><i class="fas fa-check text-success me-2"></i>Dedicated support</li>
-                            <li><i class="fas fa-check text-success me-2"></i>Training included</li>
-                            <li><i class="fas fa-check text-success me-2"></i>White-label options</li>
-                        </ul>
-                    </div>
-                    <div class="card-footer">
-                        <form action="{{ url_for('create_checkout_session') }}" method="POST">
-                            {{ csrf_token() }}
-                            <input type="hidden" name="price_id" value="price_enterprise_monthly">
-                            <button type="submit" class="btn btn-outline-warning w-100">
-                                <i class="fas fa-building me-2"></i>
-                                Choose Enterprise
-                            </button>
-                        </form>
-                    </div>
+            <div class="sp-card sp-pricing-card">
+                <div class="sp-text-center" style="padding-bottom: 12px; border-bottom: 1px solid var(--sp-border-soft);">
+                    <h3>Enterprise</h3>
+                    <p class="sp-text-muted" style="font-size: 0.82em;">For large organizations</p>
                 </div>
+                <div class="sp-card-body sp-text-center">
+                    <div class="sp-price sp-text-gold sp-mt-2">$199</div>
+                    <p class="sp-price-period">per month</p>
+                    <ul class="sp-feature-list">
+                        <li>Everything in Professional</li>
+                        <li>Multi-location support</li>
+                        <li>Advanced reporting</li>
+                        <li>Custom integrations</li>
+                        <li>Dedicated support</li>
+                        <li>Training included</li>
+                        <li>White-label options</li>
+                    </ul>
+                </div>
+                <form action="{{ url_for('create_checkout_session') }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="price_id" value="price_1TFfyMQUa1vRGKtT6BRShiuY">
+                    <button type="submit" class="sp-btn sp-btn--ghost" style="width: 100%; justify-content: center; border-color: rgba(255,215,0,0.3); color: var(--sp-gold);">&#127970; Choose Enterprise</button>
+                </form>
             </div>
         </div>
 
         <!-- Features Section -->
-        <div class="row mt-5">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">
-                            <i class="fas fa-star me-2"></i>
-                            Why Choose Our Service Management Platform?
-                        </h5>
-                        <div class="row">
-                            <div class="col-md-3">
-                                <i class="fas fa-mobile-alt fa-2x mb-2 text-primary"></i>
-                                <h6>Mobile Optimized</h6>
-                                <p class="small text-muted">Works perfectly on phones and tablets for field use</p>
-                            </div>
-                            <div class="col-md-3">
-                                <i class="fas fa-camera fa-2x mb-2 text-primary"></i>
-                                <h6>Photo Documentation</h6>
-                                <p class="small text-muted">Before/after photos with easy comparison tools</p>
-                            </div>
-                            <div class="col-md-3">
-                                <i class="fas fa-chart-line fa-2x mb-2 text-primary"></i>
-                                <h6>Performance Analytics</h6>
-                                <p class="small text-muted">Track efficiency and improve your business</p>
-                            </div>
-                            <div class="col-md-3">
-                                <i class="fas fa-cog fa-2x mb-2 text-primary"></i>
-                                <h6>Customizable</h6>
-                                <p class="small text-muted">Adapt to any service industry with custom templates</p>
-                            </div>
-                        </div>
-                    </div>
+        <div class="sp-card sp-text-center sp-section">
+            <h3>&#11088; Why Choose Our Service Management Platform?</h3>
+            <div class="sp-grid sp-grid-4 sp-mt-2">
+                <div class="sp-text-center">
+                    <div style="font-size: 2em; color: var(--sp-violet);">&#128241;</div>
+                    <h4 class="sp-mt-1">Mobile Optimized</h4>
+                    <p class="sp-text-muted" style="font-size: 0.82em;">Works perfectly on phones and tablets for field use</p>
+                </div>
+                <div class="sp-text-center">
+                    <div style="font-size: 2em; color: var(--sp-violet);">&#128247;</div>
+                    <h4 class="sp-mt-1">Photo Documentation</h4>
+                    <p class="sp-text-muted" style="font-size: 0.82em;">Before/after photos with easy comparison tools</p>
+                </div>
+                <div class="sp-text-center">
+                    <div style="font-size: 2em; color: var(--sp-violet);">&#128200;</div>
+                    <h4 class="sp-mt-1">Performance Analytics</h4>
+                    <p class="sp-text-muted" style="font-size: 0.82em;">Track efficiency and improve your business</p>
+                </div>
+                <div class="sp-text-center">
+                    <div style="font-size: 2em; color: var(--sp-violet);">&#9881;</div>
+                    <h4 class="sp-mt-1">Customizable</h4>
+                    <p class="sp-text-muted" style="font-size: 0.82em;">Adapt to any service industry with custom templates</p>
                 </div>
             </div>
         </div>
 
         <!-- FAQ Section -->
-        <div class="row mt-5">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">
-                            <i class="fas fa-question-circle me-2"></i>
-                            Frequently Asked Questions
-                        </h5>
+        <div class="sp-card sp-section">
+            <div class="sp-card-header">
+                <h3 class="sp-card-title">&#10067; Frequently Asked Questions</h3>
+            </div>
+            <div class="sp-card-body">
+                <div class="sp-accordion">
+                    <div class="sp-accordion-item">
+                        <button class="sp-accordion-btn" onclick="this.parentElement.classList.toggle('open')">Can I change plans anytime?</button>
+                        <div class="sp-accordion-body">Yes! You can upgrade or downgrade your plan at any time. Changes take effect immediately and billing is prorated.</div>
                     </div>
-                    <div class="card-body">
-                        <div class="accordion" id="faqAccordion">
-                            <div class="accordion-item">
-                                <h2 class="accordion-header">
-                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
-                                        Can I change plans anytime?
-                                    </button>
-                                </h2>
-                                <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                                    <div class="accordion-body">
-                                        Yes! You can upgrade or downgrade your plan at any time. Changes take effect immediately and billing is prorated.
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="accordion-item">
-                                <h2 class="accordion-header">
-                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
-                                        Is there a free trial?
-                                    </button>
-                                </h2>
-                                <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                                    <div class="accordion-body">
-                                        All plans come with a 14-day free trial. No credit card required to start your trial.
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="accordion-item">
-                                <h2 class="accordion-header">
-                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
-                                        What industries does this work for?
-                                    </button>
-                                </h2>
-                                <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                                    <div class="accordion-body">
-                                        Our platform works for any task-based service industry including cleaning, plumbing, landscaping, home inspection, maintenance, and more.
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="sp-accordion-item">
+                        <button class="sp-accordion-btn" onclick="this.parentElement.classList.toggle('open')">Is there a free trial?</button>
+                        <div class="sp-accordion-body">All plans come with a 14-day free trial. No credit card required to start your trial.</div>
+                    </div>
+                    <div class="sp-accordion-item">
+                        <button class="sp-accordion-btn" onclick="this.parentElement.classList.toggle('open')">What industries does this work for?</button>
+                        <div class="sp-accordion-body">Our platform works for any task-based service industry including cleaning, plumbing, landscaping, home inspection, maintenance, and more.</div>
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- OhananahO Footer -->
+        <div class="sp-footer">
+            <span class="sp-ohananaho">OhananahO</span>
+            <br>ServiceFlowEngine &middot; Drake Enterprise LLC
+        </div>
     </div>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/static/sw.js');
-}
-</script>
+    <script>
+    if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/static/sw.js'); }
+    </script>
 </body>
 </html>

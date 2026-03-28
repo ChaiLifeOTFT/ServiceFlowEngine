@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#06060c">
+    <title>Ready - {{ service_config.app_title }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;600&family=Space+Grotesk:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/solpunk.css') }}" rel="stylesheet">
+</head>
+<body>
+    <div class="sp-container">
+        <div class="sp-section sp-text-center">
+            <div style="font-size: 3rem; color: var(--sp-green);">&#10004;</div>
+            <h1>You're Ready!</h1>
+            <p class="sp-text-muted">Your ServiceFlowEngine is configured and ready to use</p>
+        </div>
+        <div class="sp-card sp-card--green" style="max-width: 600px; margin: 0 auto;">
+            <div class="sp-card-body sp-text-center">
+                <p>Create your first job estimate, track tasks in the field, and watch your performance data build over time.</p>
+                <div class="sp-mt-3 sp-flex" style="justify-content: center; flex-wrap: wrap;">
+                    <a href="{{ url_for('index') }}" class="sp-btn">&#10010; Create First Job</a>
+                    <a href="{{ url_for('pricing') }}" class="sp-btn sp-btn--green">&#128179; View Plans</a>
+                </div>
+            </div>
+        </div>
+        <div class="sp-footer">
+            <span class="sp-ohananaho">OhananahO</span>
+            <br>ServiceFlowEngine &middot; Drake Enterprise LLC
+        </div>
+    </div>
+</body>
+</html>

@@ -1,54 +1,72 @@
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="dark">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#0d6efd">
+    <meta name="theme-color" content="#06060c">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="manifest" href="/static/manifest.json">
     <link rel="apple-touch-icon" href="/static/icon-192.png">
     <title>Task {{ progress.current }} of {{ progress.total }} - {{ service_config.app_title }}</title>
-    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/custom.css') }}" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;600&family=Space+Grotesk:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/solpunk.css') }}" rel="stylesheet">
+    <style>
+        @media (max-width: 768px) {
+            .sp-btn { min-height: 54px; font-size: 0.9em; }
+            .sp-input, .sp-textarea, .sp-select { min-height: 50px; font-size: 1em; }
+            #timer-display, #timer-display-running { font-size: 3rem !important; }
+            input[type="file"] { min-height: 50px; }
+        }
+        .sp-timer { font-family: var(--sp-mono); font-size: 3.5rem; font-weight: 600; color: var(--sp-gold); letter-spacing: 2px; }
+        .sp-alert-inline { padding: 12px 16px; border-radius: var(--sp-radius); font-size: 0.88em; display: flex; align-items: center; gap: 8px; }
+        .sp-alert-inline.info { background: rgba(70,130,230,0.1); border: 1px solid rgba(70,130,230,0.2); color: var(--sp-blue); }
+        .sp-alert-inline.warn { background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.2); color: var(--sp-gold); }
+        .sp-alert-inline.caution { background: rgba(255,136,68,0.1); border: 1px solid rgba(255,136,68,0.2); color: var(--sp-amber); }
+        .sp-photo-label { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 14px 20px; width: 100%; cursor: pointer; }
+        .sp-photo-preview { margin-top: 8px; display: none; }
+        .sp-photo-preview img { max-height: 200px; border-radius: var(--sp-radius); border: 1px solid var(--sp-border); }
+        .sp-materials-list { list-style: none; padding: 0; }
+        .sp-materials-list li { padding: 4px 0; font-size: 0.88em; }
+        .sp-materials-list li::before { content: '\2713 '; color: var(--sp-green); margin-right: 6px; }
+        /* Alert styles */
+        .sp-alert { padding: 12px 18px; border-radius: var(--sp-radius); margin-bottom: 16px; font-size: 0.88em; display: flex; align-items: center; gap: 10px; animation: sp-fadeIn 0.3s ease-out; }
+        .sp-alert-error { background: rgba(255,107,107,0.12); border: 1px solid rgba(255,107,107,0.25); color: var(--sp-coral); }
+        .sp-alert-success { background: rgba(0,255,136,0.1); border: 1px solid rgba(0,255,136,0.2); color: var(--sp-green); }
+        .sp-alert-warning { background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.2); color: var(--sp-gold); }
+        .sp-alert-info { background: rgba(70,130,230,0.1); border: 1px solid rgba(70,130,230,0.2); color: var(--sp-blue); }
+        .sp-alert-close { margin-left: auto; background: none; border: none; color: inherit; cursor: pointer; opacity: 0.6; }
+        .sp-alert-close:hover { opacity: 1; }
+    </style>
 </head>
 <body>
-    <div class="container mt-4">
-        <!-- Header - Mobile Responsive -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <!-- Mobile Header -->
-                <div class="d-block d-md-none text-center mb-3">
-                    <i class="fas fa-cogs fa-2x text-primary mb-2"></i>
-                    <h3 class="mb-1">{{ job_data.service_type|title }}</h3>
-                    <p class="text-muted small mb-2">{{ job_data.client_name }}</p>
-                    <div class="badge bg-primary">Task {{ progress.current }} of {{ progress.total }}</div>
-                    <div class="progress mt-2">
-                        <div class="progress-bar" role="progressbar" style="width: {{ progress.percentage }}%"></div>
-                    </div>
+    <div class="sp-container">
+        <!-- Accessibility Bar -->
+        <div class="sp-a11y-bar" role="toolbar" aria-label="Accessibility options">
+            <label><input type="checkbox" onchange="document.body.classList.toggle('sp-adhd')"> ADHD Mode</label>
+            <div class="sp-a11y-sep"></div>
+            <label><input type="checkbox" onchange="document.body.classList.toggle('sp-hc')"> High Contrast</label>
+            <div class="sp-a11y-sep"></div>
+            <select onchange="document.body.className=document.body.className.replace(/sp-text-\w+/g,'');if(this.value)document.body.classList.add(this.value)" aria-label="Text size">
+                <option value="">Text Size</option>
+                <option value="sp-text-lg">Large</option>
+                <option value="sp-text-xl">X-Large</option>
+            </select>
+        </div>
+
+        <!-- Header -->
+        <div class="sp-header" style="flex-wrap: wrap;">
+            <div class="sp-flex" style="gap: 16px; flex-wrap: wrap;">
+                <div style="font-size: 2rem;">&#9881;</div>
+                <div>
+                    <h1 style="margin: 0;">{{ job_data.service_type|title }}</h1>
+                    <p class="sp-text-muted" style="font-size: 0.82em; margin: 4px 0 0;">{{ job_data.client_name }} - {{ job_data.job_address }}{% if job_data.reference_number %} (Ref: {{ job_data.reference_number }}){% endif %}</p>
                 </div>
-                
-                <!-- Desktop Header -->
-                <div class="d-none d-md-flex justify-content-between align-items-center">
-                    <div class="d-flex align-items-center">
-                        <div class="logo-container me-4">
-                            <i class="fas fa-cogs fa-3x text-primary"></i>
-                        </div>
-                        <div class="border-start ps-4">
-                            <h1 class="display-6 mb-1">
-                                <i class="fas fa-tasks me-2"></i>
-                                {{ job_data.service_type|title }}
-                            </h1>
-                            <p class="text-muted mb-0">{{ job_data.client_name }} - {{ job_data.job_address }}{% if job_data.reference_number %} (Ref: {{ job_data.reference_number }}){% endif %}</p>
-                        </div>
-                    </div>
-                    <div class="text-end">
-                        <h6 class="mb-1">Task {{ progress.current }} of {{ progress.total }}</h6>
-                        <div class="progress" style="width: 200px;">
-                            <div class="progress-bar" role="progressbar" style="width: {{ progress.percentage }}%"></div>
-                        </div>
-                    </div>
+            </div>
+            <div style="text-align: right;">
+                <span class="sp-badge sp-badge--active">Task {{ progress.current }} / {{ progress.total }}</span>
+                <div class="sp-progress sp-mt-1" style="width: 160px;">
+                    <div class="sp-progress-fill" style="width: {{ progress.percentage }}%;"></div>
                 </div>
             </div>
         </div>
@@ -57,63 +75,53 @@
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <div class="alert alert-{% if category == 'error' %}danger{% else %}{{ category }}{% endif %} alert-dismissible fade show" role="alert">
-                        <i class="fas fa-{% if category == 'error' %}exclamation-triangle{% else %}info-circle{% endif %} me-2"></i>
+                    <div class="sp-alert sp-alert-{% if category == 'error' %}error{% else %}{{ category }}{% endif %}" role="alert">
+                        <span>{% if category == 'error' %}&#9888;{% else %}&#8505;{% endif %}</span>
                         {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        <button class="sp-alert-close" onclick="this.parentElement.remove()" aria-label="Close">&times;</button>
                     </div>
                 {% endfor %}
             {% endif %}
         {% endwith %}
 
         <!-- Current Task -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="card border-primary">
-                    <div class="card-header bg-primary bg-opacity-10">
-                        <h3 class="card-title mb-0">
-                            <i class="fas fa-check-square me-2"></i>
-                            {{ task.task }}
-                        </h3>
-                        <div class="mt-2">
-                            <span class="badge bg-info me-2">
-                                <i class="fas fa-clock me-1"></i>
-                                {{ task.estimated_minutes }} minutes
-                            </span>
-                            <span class="badge bg-secondary">
-                                <i class="fas fa-home me-1"></i>
-                                {{ "{:,}".format(job_data.service_area_size) }} {{ service_config.service_unit_abbr }}
-                            </span>
-                        </div>
+        <div class="sp-card sp-card--kimi sp-section">
+            <div class="sp-card-header" style="flex-wrap: wrap;">
+                <h3 class="sp-card-title">&#9745; {{ task.task }}</h3>
+                <div class="sp-flex" style="gap: 6px;">
+                    <span class="sp-badge sp-badge--info">&#9202; {{ task.estimated_minutes }} min</span>
+                    <span class="sp-badge sp-badge--warn">{{ "{:,}".format(job_data.service_area_size) }} {{ service_config.service_unit_abbr }}</span>
+                </div>
+            </div>
+            <div class="sp-card-body">
+                <h4>Overview</h4>
+                <p style="font-size: 1em; margin-bottom: 16px;">{{ task.instructions }}</p>
+
+                <div class="sp-grid sp-grid-2 sp-mt-2">
+                    <div>
+                        <h4>Method</h4>
+                        <p class="sp-text-muted" style="font-size: 0.88em;">{{ task.method }}</p>
+
+                        <h4 class="sp-mt-2">Materials Needed</h4>
+                        <ul class="sp-materials-list">
+                            {% for material in task.materials %}
+                            <li>{{ material }}</li>
+                            {% endfor %}
+                        </ul>
                     </div>
-                    <div class="card-body">
-                        <h5><i class="fas fa-list-ul me-2"></i>Overview:</h5>
-                        <p class="lead">{{ task.instructions }}</p>
-                        
-                        <div class="row mt-4">
-                            <div class="col-md-6">
-                                <h6><i class="fas fa-cogs me-2"></i>Method:</h6>
-                                <p>{{ task.method }}</p>
-                                
-                                <h6><i class="fas fa-tools me-2"></i>Materials Needed:</h6>
-                                <ul class="list-unstyled">
-                                    {% for material in task.materials %}
-                                    <li><i class="fas fa-check-circle text-success me-2"></i>{{ material }}</li>
-                                    {% endfor %}
-                                </ul>
-                            </div>
-                            <div class="col-md-6">
-                                <h6><i class="fas fa-spray-can me-2"></i>Approved Products:</h6>
-                                <ul class="list-unstyled">
-                                    {% for product in task.approved_products %}
-                                    <li class="mb-1">{{ product }}</li>
-                                    {% endfor %}
-                                </ul>
-                                
-                                <div class="alert alert-warning mt-3">
-                                    <h6><i class="fas fa-exclamation-triangle me-2"></i>Safety & Precautions:</h6>
-                                    <p class="mb-0 small">{{ task.precautions }}</p>
-                                </div>
+                    <div>
+                        <h4>Approved Products</h4>
+                        <ul class="sp-materials-list">
+                            {% for product in task.approved_products %}
+                            <li>{{ product }}</li>
+                            {% endfor %}
+                        </ul>
+
+                        <div class="sp-alert-inline caution sp-mt-2">
+                            <span>&#9888;</span>
+                            <div>
+                                <strong>Safety & Precautions:</strong><br>
+                                <span style="font-size: 0.85em;">{{ task.precautions }}</span>
                             </div>
                         </div>
                     </div>
@@ -122,189 +130,145 @@
         </div>
 
         <!-- Task Timer Section -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="card border-info">
-                    <div class="card-header bg-info bg-opacity-10">
-                        <h4 class="card-title mb-0">
-                            <i class="fas fa-stopwatch me-2"></i>
-                            Task Timer & Documentation
-                        </h4>
-                    </div>
-                    <div class="card-body">
-                        <form id="taskForm" action="{{ url_for('complete_task', job_id=job_data.id, task_index=task_index) }}" method="POST" enctype="multipart/form-data">
-                            {{ csrf_token() }}
-                            <!-- Start Task Section -->
-                            <div id="start-task-section">
-                                <div class="text-center mb-4">
-                                    <h2 id="timer-display" class="display-4 mb-2">00:00:00</h2>
-                                    <p class="text-muted">
-                                        Estimated Time: <span class="badge bg-secondary">{{ task.estimated_minutes }} minutes</span>
-                                    </p>
-                                </div>
-                                
-                                <!-- Before Photo Section -->
-                                <div id="before-photo-section" class="mb-3">
-                                    <label for="task_before_photo" class="form-label">
-                                        <i class="fas fa-camera me-1"></i>
-                                        Take Before Photo (Required to Start)
-                                    </label>
-                                    <div class="d-grid">
-                                        <label for="task_before_photo" class="btn btn-outline-info btn-lg">
-                                            <i class="fas fa-camera-retro me-2"></i>
-                                            <span class="d-none d-sm-inline">Open Camera</span>
-                                            <span class="d-sm-none">Camera</span>
-                                        </label>
-                                    </div>
-                                    <input type="file" class="form-control d-none" id="task_before_photo" name="task_before_photo" accept="image/*" capture="environment" required>
-                                    <div class="form-text">Document the area before starting the task</div>
-                                    
-                                    <!-- Preview area -->
-                                    <div id="before_preview" class="mt-2" style="display: none;">
-                                        <img id="before_img" class="img-fluid rounded border" style="max-height: 200px;" alt="Before photo preview">
-                                    </div>
-                                </div>
-                                
-                                <div class="d-grid gap-2">
-                                    <button type="button" id="start-task-btn" class="btn btn-primary btn-lg btn-block" disabled>
-                                        <i class="fas fa-camera me-2"></i>
-                                        <span class="d-none d-sm-inline">Upload Before Photo & Start Task</span>
-                                        <span class="d-sm-none">Take Photo & Start</span>
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            <!-- Running Task Section -->
-                            <div id="timer-running-section" style="display: none;">
-                                <div class="text-center mb-4">
-                                    <h2 id="timer-display-running" class="display-4 mb-2">00:00:00</h2>
-                                    <div class="alert alert-info">
-                                        <i class="fas fa-running me-2"></i>
-                                        Task in progress... Work according to instructions above.
-                                    </div>
-                                    <div id="overtime-alert" class="alert alert-warning mt-3" style="display: none;">
-                                        <i class="fas fa-exclamation-triangle me-2"></i>
-                                        <strong>Time Exceeded!</strong> This task is taking longer than estimated.
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Complete Task Section -->
-                            <div id="complete-task-section" style="display: none;">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <label for="task_after_photo" class="form-label">
-                                            <i class="fas fa-camera me-1"></i>
-                                            Take After Photo (Required) *
-                                        </label>
-                                        <div class="d-grid mb-3">
-                                            <label for="task_after_photo" class="btn btn-outline-success btn-lg">
-                                                <i class="fas fa-camera me-2"></i>
-                                                <span class="d-none d-sm-inline">Take After Photo</span>
-                                                <span class="d-sm-none">After Photo</span>
-                                            </label>
-                                        </div>
-                                        <input type="file" class="form-control d-none" id="task_after_photo" name="task_after_photo" accept="image/*" capture="environment" required>
-                                        
-                                        <div id="after_preview" class="mt-2" style="display: none;">
-                                            <img id="after_img" class="img-fluid rounded border" style="max-height: 200px;" alt="After photo preview">
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="col-md-6">
-                                        <label for="task_notes" class="form-label">
-                                            <i class="fas fa-sticky-note me-1"></i>
-                                            Task Notes
-                                        </label>
-                                        <textarea class="form-control" id="task_notes" name="task_notes" rows="4" maxlength="500" placeholder="Any additional notes about this task..."></textarea>
-                                        
-                                        <label for="exceptions" class="form-label mt-3">
-                                            <i class="fas fa-exclamation-triangle me-1"></i>
-                                            Exceptions/Issues
-                                        </label>
-                                        <textarea class="form-control" id="exceptions" name="exceptions" rows="3" maxlength="500" placeholder="Any exceptions or issues encountered..."></textarea>
-                                    </div>
-                                </div>
-                                
-                                <!-- Hidden fields for timing -->
-                                <input type="hidden" id="actual_minutes" name="actual_minutes" value="">
-                                
-                                <div class="d-grid mt-4">
-                                    <button type="submit" id="complete-task-btn" class="btn btn-success btn-lg" disabled>
-                                        <i class="fas fa-check-circle me-2"></i>
-                                        Complete Task & Continue
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+        <div class="sp-card sp-card--deep sp-section">
+            <div class="sp-card-header">
+                <h3 class="sp-card-title">&#9201; Task Timer & Documentation</h3>
             </div>
+            <div class="sp-card-body">
+                <form id="taskForm" action="{{ url_for('complete_task', job_id=job_data.id, task_index=task_index) }}" method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <!-- Start Task Section -->
+                    <div id="start-task-section">
+                        <div class="sp-text-center sp-mb-2">
+                            <div id="timer-display" class="sp-timer">00:00:00</div>
+                            <p class="sp-text-muted sp-mt-1">
+                                Estimated Time: <span class="sp-badge sp-badge--info">{{ task.estimated_minutes }} minutes</span>
+                            </p>
+                        </div>
+
+                        <!-- Before Photo Section -->
+                        <div id="before-photo-section" class="sp-form-group">
+                            <label class="sp-label-text">&#128247; Take Before Photo (Required to Start)</label>
+                            <label for="task_before_photo" class="sp-btn sp-btn--ghost sp-photo-label">
+                                &#128248; Open Camera
+                            </label>
+                            <input type="file" class="sp-input" id="task_before_photo" name="task_before_photo" accept="image/*" capture="environment" required style="display: none;">
+                            <small class="sp-text-dim" style="display: block; margin-top: 4px; font-size: 0.75em;">Document the area before starting the task</small>
+
+                            <div id="before_preview" class="sp-photo-preview">
+                                <img id="before_img" alt="Before photo preview">
+                            </div>
+                        </div>
+
+                        <button type="button" id="start-task-btn" class="sp-btn" style="width: 100%; justify-content: center; padding: 14px;" disabled>
+                            &#128247; Upload Before Photo & Start Task
+                        </button>
+                    </div>
+
+                    <!-- Running Task Section -->
+                    <div id="timer-running-section" style="display: none;">
+                        <div class="sp-text-center sp-mb-2">
+                            <div id="timer-display-running" class="sp-timer">00:00:00</div>
+                            <div class="sp-alert-inline info sp-mt-2" style="justify-content: center;">
+                                &#127939; Task in progress... Work according to instructions above.
+                            </div>
+                            <div id="overtime-alert" class="sp-alert-inline warn sp-mt-1" style="display: none; justify-content: center;">
+                                &#9888; <strong>Time Exceeded!</strong>&nbsp;This task is taking longer than estimated.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Complete Task Section -->
+                    <div id="complete-task-section" style="display: none;">
+                        <div class="sp-grid sp-grid-2">
+                            <div>
+                                <label class="sp-label-text">&#128247; Take After Photo (Required) *</label>
+                                <label for="task_after_photo" class="sp-btn sp-btn--green sp-photo-label">
+                                    &#128248; Take After Photo
+                                </label>
+                                <input type="file" class="sp-input" id="task_after_photo" name="task_after_photo" accept="image/*" capture="environment" required style="display: none;">
+
+                                <div id="after_preview" class="sp-photo-preview">
+                                    <img id="after_img" alt="After photo preview">
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="sp-form-group">
+                                    <label for="task_notes" class="sp-label-text">&#128221; Task Notes</label>
+                                    <textarea class="sp-textarea" id="task_notes" name="task_notes" rows="4" maxlength="500" placeholder="Any additional notes about this task..."></textarea>
+                                </div>
+
+                                <div class="sp-form-group">
+                                    <label for="exceptions" class="sp-label-text">&#9888; Exceptions/Issues</label>
+                                    <textarea class="sp-textarea" id="exceptions" name="exceptions" rows="3" maxlength="500" placeholder="Any exceptions or issues encountered..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Hidden fields for timing -->
+                        <input type="hidden" id="actual_minutes" name="actual_minutes" value="">
+
+                        <div class="sp-mt-2">
+                            <button type="submit" id="complete-task-btn" class="sp-btn sp-btn--green" style="width: 100%; justify-content: center; padding: 14px;" disabled>
+                                &#10004; Complete Task & Continue
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- OhananahO Footer -->
+        <div class="sp-footer">
+            <span class="sp-ohananaho">OhananahO</span>
+            <br>ServiceFlowEngine &middot; Drake Enterprise LLC
         </div>
     </div>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
-    
     <script>
         // Task-specific JavaScript
         let taskTimer = null;
         let startTime = null;
         let estimatedMinutes = {{ task.estimated_minutes }};
-        
-        // Initialize task functionality
+
         document.addEventListener('DOMContentLoaded', function() {
             setupTaskTimer();
             setupPhotoHandling();
         });
-        
-        // Clean up timer when leaving page
+
         window.addEventListener('beforeunload', function() {
-            if (taskTimer) {
-                clearInterval(taskTimer);
-                taskTimer = null;
-            }
+            if (taskTimer) { clearInterval(taskTimer); taskTimer = null; }
         });
-        
+
         function setupTaskTimer() {
             const startBtn = document.getElementById('start-task-btn');
             const beforePhotoInput = document.getElementById('task_before_photo');
             const afterPhotoInput = document.getElementById('task_after_photo');
             const completeBtn = document.getElementById('complete-task-btn');
             const taskForm = document.querySelector('form');
-            
-            // Enable start button when before photo is taken
+
             beforePhotoInput.addEventListener('change', function() {
                 if (this.files && this.files[0]) {
                     previewImage(this.files[0], 'before_preview', 'before_img');
                     startBtn.disabled = false;
                 }
             });
-            
-            // Start task timer
-            startBtn.addEventListener('click', function() {
-                startTaskTimer();
-            });
-            
-            // Handle after photo
+
+            startBtn.addEventListener('click', function() { startTaskTimer(); });
+
             afterPhotoInput.addEventListener('change', function() {
                 if (this.files && this.files[0]) {
                     previewImage(this.files[0], 'after_preview', 'after_img');
                     completeBtn.disabled = false;
                 }
             });
-            
-            // Stop timer and validate before form submission
+
             taskForm.addEventListener('submit', function(e) {
                 e.preventDefault();
-                
-                // Stop the timer first
                 if (taskTimer) {
                     clearInterval(taskTimer);
                     taskTimer = null;
-                    
-                    // Final time calculation
                     if (startTime) {
                         const now = new Date();
                         const elapsed = Math.floor((now - startTime) / 1000);
@@ -312,83 +276,48 @@
                         document.getElementById('actual_minutes').value = elapsedMinutes;
                     }
                 }
-                
-                // Validate required fields
                 const afterPhoto = document.getElementById('task_after_photo').files[0];
                 const actualMinutes = document.getElementById('actual_minutes').value;
-                
-                if (!afterPhoto) {
-                    alert('Please take an after photo before completing the task.');
-                    return false;
-                }
-                
-                if (!actualMinutes || actualMinutes < 1) {
-                    alert('Timer error: Please restart the task or contact support.');
-                    return false;
-                }
-                
-                // Show loading state
-                completeBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Completing Task...';
+                if (!afterPhoto) { alert('Please take an after photo before completing the task.'); return false; }
+                if (!actualMinutes || actualMinutes < 1) { alert('Timer error: Please restart the task or contact support.'); return false; }
+                completeBtn.innerHTML = '&#8987; Completing Task...';
                 completeBtn.disabled = true;
-                
-                // Submit the form
                 this.submit();
             });
         }
-        
+
         function startTaskTimer() {
             startTime = new Date();
             document.getElementById('start-task-section').style.display = 'none';
             document.getElementById('timer-running-section').style.display = 'block';
             document.getElementById('complete-task-section').style.display = 'block';
-            
-            // Start timer
             taskTimer = setInterval(updateTaskTimer, 1000);
         }
-        
+
         function updateTaskTimer() {
             if (!startTime || !taskTimer) return;
-            
             try {
                 const now = new Date();
                 const elapsed = Math.floor((now - startTime) / 1000);
                 const elapsedMinutes = Math.floor(elapsed / 60);
-                
-                // Update display
                 const hours = Math.floor(elapsed / 3600);
                 const minutes = Math.floor((elapsed % 3600) / 60);
                 const seconds = elapsed % 60;
-                
-                const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-                
+                const timeString = hours.toString().padStart(2, '0') + ':' + minutes.toString().padStart(2, '0') + ':' + seconds.toString().padStart(2, '0');
                 const timerDisplay = document.getElementById('timer-display-running');
-                if (timerDisplay) {
-                    timerDisplay.textContent = timeString;
-                }
-                
-                // Show overtime alert if needed
+                if (timerDisplay) timerDisplay.textContent = timeString;
                 if (elapsedMinutes > estimatedMinutes) {
                     const overtimeAlert = document.getElementById('overtime-alert');
-                    if (overtimeAlert) {
-                        overtimeAlert.style.display = 'block';
-                    }
+                    if (overtimeAlert) overtimeAlert.style.display = 'flex';
                 }
-                
-                // Update hidden field with validation
                 const actualMinutesField = document.getElementById('actual_minutes');
-                if (actualMinutesField) {
-                    actualMinutesField.value = Math.max(elapsedMinutes, 1);
-                }
+                if (actualMinutesField) actualMinutesField.value = Math.max(elapsedMinutes, 1);
             } catch (error) {
                 console.error('Timer update error:', error);
-                // Stop timer on error to prevent further issues
-                if (taskTimer) {
-                    clearInterval(taskTimer);
-                    taskTimer = null;
-                }
+                if (taskTimer) { clearInterval(taskTimer); taskTimer = null; }
             }
         }
-        
+
         function previewImage(file, containerId, imgId) {
             const reader = new FileReader();
             reader.onload = function(e) {
@@ -397,27 +326,18 @@
             };
             reader.readAsDataURL(file);
         }
-        
+
         function setupPhotoHandling() {
-            // Make file input labels trigger the hidden inputs
-            const beforeLabel = document.querySelector('label[for="task_before_photo"]');
-            const afterLabel = document.querySelector('label[for="task_after_photo"]');
-            
-            beforeLabel.addEventListener('click', function(e) {
-                e.preventDefault();
-                document.getElementById('task_before_photo').click();
-            });
-            
-            afterLabel.addEventListener('click', function(e) {
-                e.preventDefault();
-                document.getElementById('task_after_photo').click();
+            document.querySelectorAll('label[for="task_before_photo"], label[for="task_after_photo"]').forEach(function(lbl) {
+                lbl.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    document.getElementById(lbl.getAttribute('for')).click();
+                });
             });
         }
     </script>
-<script>
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/static/sw.js');
-}
-</script>
+    <script>
+    if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/static/sw.js'); }
+    </script>
 </body>
 </html>

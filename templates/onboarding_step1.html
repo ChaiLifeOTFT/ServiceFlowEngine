@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#06060c">
+    <title>Setup - {{ service_config.app_title }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;600&family=Space+Grotesk:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/solpunk.css') }}" rel="stylesheet">
+</head>
+<body>
+    <div class="sp-container">
+        <div class="sp-section sp-text-center">
+            <h1>Step 1: Welcome</h1>
+            <p class="sp-text-muted">Let's configure your service business profile</p>
+        </div>
+        <div class="sp-card sp-card--kimi" style="max-width: 600px; margin: 0 auto;">
+            <div class="sp-card-body sp-text-center">
+                <p>ServiceFlowEngine adapts to any field service industry. In the next step, you'll choose your industry and we'll configure templates automatically.</p>
+                <div class="sp-mt-3">
+                    <a href="{{ url_for('onboarding_step', step=2) }}" class="sp-btn" style="padding: 14px 32px;">Next: Choose Your Industry &#8594;</a>
+                </div>
+            </div>
+        </div>
+        <div class="sp-footer">
+            <span class="sp-ohananaho">OhananahO</span>
+            <br>ServiceFlowEngine &middot; Drake Enterprise LLC
+        </div>
+    </div>
+</body>
+</html>

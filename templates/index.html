@@ -1,44 +1,84 @@
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="dark">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#0d6efd">
+    <meta name="theme-color" content="#06060c">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="manifest" href="/static/manifest.json">
     <link rel="apple-touch-icon" href="/static/icon-192.png">
     <title>{{ service_config.app_title }}</title>
-    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/custom.css') }}" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;600&family=Space+Grotesk:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/solpunk.css') }}" rel="stylesheet">
+    <style>
+        /* Mobile field-work optimizations */
+        @media (max-width: 768px) {
+            .sp-btn { min-height: 54px; font-size: 0.9em; }
+            .sp-input, .sp-textarea, .sp-select { min-height: 50px; font-size: 1em; }
+            .sp-label-text { font-size: 0.8em; }
+            #timer-display, #timer-display-running { font-size: 3rem; }
+            input[type="file"] { min-height: 50px; }
+        }
+        /* Chat modal styles */
+        .sp-chat-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 100; display: none; align-items: center; justify-content: center; }
+        .sp-chat-overlay.active { display: flex; }
+        .sp-chat-modal { background: var(--sp-bg-deep); border: 1px solid var(--sp-border); border-radius: var(--sp-radius-lg); width: 90%; max-width: 640px; height: 500px; display: flex; flex-direction: column; animation: sp-slideIn 0.3s ease-out; }
+        .sp-chat-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--sp-border); }
+        .sp-chat-body { flex: 1; overflow-y: auto; padding: 16px; }
+        .sp-chat-footer { display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--sp-border); }
+        .sp-chat-msg { margin-bottom: 12px; display: flex; gap: 10px; }
+        .sp-chat-msg.user { flex-direction: row-reverse; }
+        .sp-chat-avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.85em; flex-shrink: 0; }
+        .sp-chat-avatar.ai { background: linear-gradient(135deg, var(--sp-violet), var(--sp-violet-deep)); }
+        .sp-chat-avatar.user { background: var(--sp-bg-surface); border: 1px solid var(--sp-border); }
+        .sp-chat-bubble { background: var(--sp-bg-surface); border: 1px solid var(--sp-border); border-radius: var(--sp-radius); padding: 10px 14px; font-size: 0.88em; max-width: 80%; }
+        .sp-chat-bubble.user { background: rgba(180,100,255,0.12); border-color: rgba(180,100,255,0.25); }
+        .sp-chat-fab { position: fixed; bottom: 20px; right: 20px; z-index: 50; width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, var(--sp-violet), var(--sp-violet-deep)); border: none; color: #fff; font-size: 1.4em; cursor: pointer; box-shadow: 0 4px 20px rgba(180,100,255,0.4); transition: all 0.3s var(--sp-ease); animation: sp-breathe 3s ease-in-out infinite; }
+        .sp-chat-fab:hover { transform: scale(1.1); box-shadow: 0 6px 28px rgba(180,100,255,0.5); }
+        /* Alert styles */
+        .sp-alert { padding: 12px 18px; border-radius: var(--sp-radius); margin-bottom: 16px; font-size: 0.88em; display: flex; align-items: center; gap: 10px; animation: sp-fadeIn 0.3s ease-out; }
+        .sp-alert-error { background: rgba(255,107,107,0.12); border: 1px solid rgba(255,107,107,0.25); color: var(--sp-coral); }
+        .sp-alert-success { background: rgba(0,255,136,0.1); border: 1px solid rgba(0,255,136,0.2); color: var(--sp-green); }
+        .sp-alert-warning { background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.2); color: var(--sp-gold); }
+        .sp-alert-info { background: rgba(70,130,230,0.1); border: 1px solid rgba(70,130,230,0.2); color: var(--sp-blue); }
+        .sp-alert-close { margin-left: auto; background: none; border: none; color: inherit; cursor: pointer; opacity: 0.6; font-size: 1.1em; }
+        .sp-alert-close:hover { opacity: 1; }
+        /* Print */
+        @media print {
+            .sp-chat-fab, .sp-a11y-bar, .sp-btn { display: none !important; }
+            body { background: #fff !important; color: #000 !important; }
+            body::before { display: none; }
+            .sp-card { background: #fff; border: 1px solid #ccc; color: #000; }
+        }
+    </style>
 </head>
 <body>
-    <div class="container mt-4">
+    <div class="sp-container">
+        <!-- Accessibility Bar -->
+        <div class="sp-a11y-bar" role="toolbar" aria-label="Accessibility options">
+            <label><input type="checkbox" onchange="document.body.classList.toggle('sp-adhd')"> ADHD Mode</label>
+            <div class="sp-a11y-sep"></div>
+            <label><input type="checkbox" onchange="document.body.classList.toggle('sp-focus')"> Focus Mode</label>
+            <div class="sp-a11y-sep"></div>
+            <label><input type="checkbox" onchange="document.body.classList.toggle('sp-hc')"> High Contrast</label>
+            <div class="sp-a11y-sep"></div>
+            <select onchange="document.body.className=document.body.className.replace(/sp-text-\w+/g,'');if(this.value)document.body.classList.add(this.value)" aria-label="Text size">
+                <option value="">Text Size</option>
+                <option value="sp-text-lg">Large</option>
+                <option value="sp-text-xl">X-Large</option>
+            </select>
+        </div>
+
         <!-- Header -->
-        <div class="row mb-5">
-            <div class="col-12 text-center">
-                <div class="mb-4">
-                    <div class="logo-container">
-                        <i class="fas fa-cogs fa-5x text-primary mb-3"></i>
-                    </div>
-                </div>
-                <h1 class="display-4 mb-2">{{ service_config.company_name }}</h1>
-                <p class="lead text-muted mt-3">{{ service_config.app_subtitle }}</p>
-                <div class="mt-3">
-                    <a href="{{ url_for('performance') }}" class="btn btn-outline-primary me-2">
-                        <i class="fas fa-chart-line me-2"></i>
-                        View Performance Dashboard
-                    </a>
-                    <a href="{{ url_for('pricing') }}" class="btn btn-success">
-                        <i class="fas fa-credit-card me-2"></i>
-                        View Pricing
-                    </a>
-                    <a href="{{ url_for('onboarding') }}" class="btn btn-outline-info">
-                        <i class="fas fa-graduation-cap me-2"></i>
-                        Quick Tour
-                    </a>
-                </div>
+        <div class="sp-section sp-text-center">
+            <div style="font-size: 3rem; margin-bottom: 12px;">&#9881;</div>
+            <h1>{{ service_config.company_name }}</h1>
+            <p class="sp-text-muted" style="margin-top: 8px;">{{ service_config.app_subtitle }}</p>
+            <div class="sp-flex" style="justify-content: center; margin-top: 16px; flex-wrap: wrap;">
+                <a href="{{ url_for('performance') }}" class="sp-btn sp-btn--ghost">&#9776; Performance Dashboard</a>
+                <a href="{{ url_for('pricing') }}" class="sp-btn sp-btn--green">&#128179; View Pricing</a>
+                <a href="{{ url_for('onboarding') }}" class="sp-btn sp-btn--ghost">&#127891; Quick Tour</a>
             </div>
         </div>
 
@@ -46,191 +86,173 @@
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <div class="alert alert-{% if category == 'error' %}danger{% else %}{{ category }}{% endif %} alert-dismissible fade show" role="alert">
-                        <i class="fas fa-{% if category == 'error' %}exclamation-triangle{% else %}info-circle{% endif %} me-2"></i>
+                    <div class="sp-alert sp-alert-{% if category == 'error' %}error{% else %}{{ category }}{% endif %}" role="alert">
+                        <span>{% if category == 'error' %}&#9888;{% else %}&#8505;{% endif %}</span>
                         {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        <button class="sp-alert-close" onclick="this.parentElement.remove()" aria-label="Close">&times;</button>
                     </div>
                 {% endfor %}
             {% endif %}
         {% endwith %}
 
         <!-- Main Form -->
-        <div class="row justify-content-center">
-            <div class="col-lg-8">
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title mb-0">
-                            <i class="fas fa-clipboard-list me-2"></i>
-                            New Service Job Estimate
-                        </h3>
-                    </div>
-                    <div class="card-body">
-                        <form action="{{ url_for('submit_job') }}" method="POST" enctype="multipart/form-data" id="jobForm">
-                            {{ csrf_token() }}
-                            <!-- Client Information -->
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label for="client_name" class="form-label">
-                                        <i class="fas fa-user me-1"></i>
-                                        {{ service_config.field_labels.client_name }} *
-                                    </label>
-                                    <input type="text" class="form-control" id="client_name" name="client_name" required maxlength="100">
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="service_provider_name" class="form-label">
-                                        <i class="fas fa-user-tie me-1"></i>
-                                        {{ service_config.field_labels.service_provider_name }} *
-                                    </label>
-                                    <input type="text" class="form-control" id="service_provider_name" name="service_provider_name" required maxlength="100">
-                                </div>
-                            </div>
-
-                            <!-- Job Address -->
-                            <div class="mb-3">
-                                <label for="job_address" class="form-label">
-                                    <i class="fas fa-map-marker-alt me-1"></i>
-                                    {{ service_config.field_labels.job_address }} *
-                                </label>
-                                <input type="text" class="form-control" id="job_address" name="job_address" required maxlength="200">
-                            </div>
-
-                            <!-- Reference Number -->
-                            <div class="mb-3">
-                                <label for="reference_number" class="form-label">
-                                    <i class="fas fa-hashtag me-1"></i>
-                                    {{ service_config.field_labels.reference_number }}
-                                </label>
-                                <input type="text" class="form-control" id="reference_number" name="reference_number" maxlength="50" placeholder="e.g., Job #12345, Ticket ABC123">
-                                <div class="form-text">Optional: Enter job reference number or identifier</div>
-                            </div>
-
-                            <!-- Service Details -->
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label for="service_area_size" class="form-label">
-                                        <i class="fas fa-ruler-combined me-1"></i>
-                                        {{ service_config.field_labels.service_area_size }} *
-                                    </label>
-                                    <input type="number" class="form-control" id="service_area_size" name="service_area_size" required min="1" max="50000">
-                                    <div class="form-text">Enter total {{ service_config.service_unit }} for service</div>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="service_type" class="form-label">
-                                        <i class="fas fa-list me-1"></i>
-                                        {{ service_config.field_labels.service_type }} *
-                                    </label>
-                                    <select class="form-select" id="service_type" name="service_type" required>
-                                        <option value="">Choose service type...</option>
-                                        {% for service_id, service_name in service_types %}
-                                        <option value="{{ service_id }}">{{ service_name }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                            </div>
-
-                            <!-- Submit Button -->
-                            <div class="d-grid">
-                                <button type="submit" class="btn btn-primary btn-lg btn-block">
-                                    <i class="fas fa-calculator me-2"></i>
-                                    <span class="d-none d-sm-inline">Calculate Time Estimate</span>
-                                    <span class="d-sm-none">Start Job</span>
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+        <div class="sp-card sp-card--kimi" style="max-width: 700px; margin: 0 auto;">
+            <div class="sp-card-header">
+                <h3 class="sp-card-title">&#128203; New Service Job Estimate</h3>
             </div>
-        </div>
-
-        <!-- Info Section -->
-        <div class="row mt-5">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">
-                            <i class="fas fa-info-circle me-2"></i>
-                            How It Works
-                        </h5>
-                        <div class="row">
-                            <div class="col-md-4">
-                                <i class="fas fa-clipboard-list fa-2x mb-2 text-primary"></i>
-                                <h6>1. Enter Job Details</h6>
-                                <p class="small text-muted">Fill in client information, address, and service parameters</p>
-                            </div>
-                            <div class="col-md-4">
-                                <i class="fas fa-clock fa-2x mb-2 text-primary"></i>
-                                <h6>2. Get Time Estimates</h6>
-                                <p class="small text-muted">Receive detailed task breakdown with time estimates</p>
-                            </div>
-                            <div class="col-md-4">
-                                <i class="fas fa-camera fa-2x mb-2 text-primary"></i>
-                                <h6>3. Document Tasks</h6>
-                                <p class="small text-muted">Take before/after photos during each task execution</p>
-                            </div>
+            <div class="sp-card-body">
+                <form action="{{ url_for('submit_job') }}" method="POST" enctype="multipart/form-data" id="jobForm">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <!-- Client Information -->
+                    <div class="sp-grid sp-grid-2">
+                        <div class="sp-form-group">
+                            <label for="client_name" class="sp-label-text">&#128100; {{ service_config.field_labels.client_name }} *</label>
+                            <input type="text" class="sp-input" id="client_name" name="client_name" required maxlength="100">
+                        </div>
+                        <div class="sp-form-group">
+                            <label for="service_provider_name" class="sp-label-text">&#128084; {{ service_config.field_labels.service_provider_name }} *</label>
+                            <input type="text" class="sp-input" id="service_provider_name" name="service_provider_name" required maxlength="100">
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- AI Chat Assistant Bubble -->
-    <div id="ai-chat-bubble" class="position-fixed" style="bottom: 20px; right: 20px; z-index: 1050;">
-        <button type="button" class="btn btn-primary rounded-circle shadow-lg chat-bubble-btn" data-bs-toggle="modal" data-bs-target="#aiChatModal">
-            <i class="fas fa-robot fa-lg"></i>
-        </button>
-    </div>
+                    <!-- Job Address -->
+                    <div class="sp-form-group">
+                        <label for="job_address" class="sp-label-text">&#128205; {{ service_config.field_labels.job_address }} *</label>
+                        <input type="text" class="sp-input" id="job_address" name="job_address" required maxlength="200">
+                    </div>
 
-    <!-- AI Chat Modal -->
-    <div class="modal fade" id="aiChatModal" tabindex="-1" aria-labelledby="aiChatModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable">
-            <div class="modal-content" style="height: 600px;">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title" id="aiChatModalLabel">
-                        <i class="fas fa-robot me-2"></i>
-                        {{ service_config.ai_assistant_name }}
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body d-flex flex-column" style="height: 450px;">
-                    <!-- Chat Messages -->
-                    <div id="chatMessages" class="flex-grow-1 overflow-auto mb-3" style="max-height: 400px;">
-                        <div class="chat-message ai-message mb-3">
-                            <div class="d-flex align-items-start">
-                                <div class="flex-shrink-0 me-2">
-                                    <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
-                                        <i class="fas fa-robot text-white"></i>
-                                    </div>
-                                </div>
-                                <div class="flex-grow-1">
-                                    <div class="bg-light rounded p-3">
-                                        <p class="mb-0 text-dark">Hello! {{ service_config.ai_assistant_intro }} How can I help you today?</p>
-                                    </div>
-                                </div>
-                            </div>
+                    <!-- Reference Number -->
+                    <div class="sp-form-group">
+                        <label for="reference_number" class="sp-label-text"># {{ service_config.field_labels.reference_number }}</label>
+                        <input type="text" class="sp-input" id="reference_number" name="reference_number" maxlength="50" placeholder="e.g., Job #12345, Ticket ABC123">
+                        <small class="sp-text-dim" style="display: block; margin-top: 4px; font-size: 0.75em;">Optional: Enter job reference number or identifier</small>
+                    </div>
+
+                    <!-- Service Details -->
+                    <div class="sp-grid sp-grid-2">
+                        <div class="sp-form-group">
+                            <label for="service_area_size" class="sp-label-text">&#128208; {{ service_config.field_labels.service_area_size }} *</label>
+                            <input type="number" class="sp-input" id="service_area_size" name="service_area_size" required min="1" max="50000">
+                            <small class="sp-text-dim" style="display: block; margin-top: 4px; font-size: 0.75em;">Enter total {{ service_config.service_unit }} for service</small>
+                        </div>
+                        <div class="sp-form-group">
+                            <label for="service_type" class="sp-label-text">&#128221; {{ service_config.field_labels.service_type }} *</label>
+                            <select class="sp-select" id="service_type" name="service_type" required>
+                                <option value="">Choose service type...</option>
+                                {% for service_id, service_name in service_types %}
+                                <option value="{{ service_id }}">{{ service_name }}</option>
+                                {% endfor %}
+                            </select>
                         </div>
                     </div>
-                    
-                    <!-- Chat Input -->
-                    <div class="d-flex">
-                        <input type="text" id="chatInput" class="form-control me-2" placeholder="Ask me anything about service management..." maxlength="500">
-                        <button type="button" id="sendChatBtn" class="btn btn-primary">
-                            <i class="fas fa-paper-plane"></i>
+
+                    <!-- Submit Button -->
+                    <div class="sp-mt-2">
+                        <button type="submit" class="sp-btn" style="width: 100%; justify-content: center; padding: 14px 20px;">
+                            &#9202; Calculate Time Estimate
                         </button>
                     </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- How It Works Section -->
+        <div class="sp-card sp-mt-3">
+            <div class="sp-text-center">
+                <h3>&#8505; How It Works</h3>
+                <div class="sp-grid sp-grid-3 sp-mt-2">
+                    <div class="sp-text-center">
+                        <div style="font-size: 2em; color: var(--sp-violet);">&#128203;</div>
+                        <h4 class="sp-mt-1">1. Enter Job Details</h4>
+                        <p class="sp-text-muted" style="font-size: 0.82em;">Fill in client information, address, and service parameters</p>
+                    </div>
+                    <div class="sp-text-center">
+                        <div style="font-size: 2em; color: var(--sp-violet);">&#9202;</div>
+                        <h4 class="sp-mt-1">2. Get Time Estimates</h4>
+                        <p class="sp-text-muted" style="font-size: 0.82em;">Receive detailed task breakdown with time estimates</p>
+                    </div>
+                    <div class="sp-text-center">
+                        <div style="font-size: 2em; color: var(--sp-violet);">&#128247;</div>
+                        <h4 class="sp-mt-1">3. Document Tasks</h4>
+                        <p class="sp-text-muted" style="font-size: 0.82em;">Take before/after photos during each task execution</p>
+                    </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- OhananahO Footer -->
+        <div class="sp-footer">
+            <span class="sp-ohananaho">OhananahO</span>
+            <br>ServiceFlowEngine &middot; Drake Enterprise LLC
+        </div>
+    </div>
+
+    <!-- AI Chat FAB -->
+    <button class="sp-chat-fab" onclick="document.getElementById('chatOverlay').classList.add('active')" aria-label="Open chat assistant">&#129302;</button>
+
+    <!-- AI Chat Overlay -->
+    <div id="chatOverlay" class="sp-chat-overlay">
+        <div class="sp-chat-modal">
+            <div class="sp-chat-header">
+                <h3 style="font-size: 0.95rem; margin: 0;">&#129302; {{ service_config.ai_assistant_name }}</h3>
+                <button class="sp-alert-close" onclick="document.getElementById('chatOverlay').classList.remove('active')" aria-label="Close chat">&times;</button>
+            </div>
+            <div class="sp-chat-body" id="chatMessages">
+                <div class="sp-chat-msg">
+                    <div class="sp-chat-avatar ai">&#129302;</div>
+                    <div class="sp-chat-bubble">Hello! {{ service_config.ai_assistant_intro }} How can I help you today?</div>
+                </div>
+            </div>
+            <div class="sp-chat-footer">
+                <input type="text" id="chatInput" class="sp-input" placeholder="Ask me anything about service management..." maxlength="500" style="flex: 1;">
+                <button type="button" id="sendChatBtn" class="sp-btn sp-btn--sm">&#9654;</button>
             </div>
         </div>
     </div>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
-<script>
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/static/sw.js');
-}
-</script>
+    <script>
+    // Override chat message rendering for SolPunk design
+    function addChatMessage(message, sender) {
+        const chatMessages = document.getElementById('chatMessages');
+        const div = document.createElement('div');
+        div.className = 'sp-chat-msg ' + sender;
+        const avatarClass = sender === 'user' ? 'user' : 'ai';
+        const avatarIcon = sender === 'user' ? '&#128100;' : '&#129302;';
+        div.innerHTML = '<div class="sp-chat-avatar ' + avatarClass + '">' + avatarIcon + '</div><div class="sp-chat-bubble ' + sender + '">' + escapeHtml(message) + '</div>';
+        chatMessages.appendChild(div);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    // Override sendChatMessage for SolPunk button states
+    function sendChatMessage() {
+        const chatInput = document.getElementById('chatInput');
+        const sendButton = document.getElementById('sendChatBtn');
+        const message = chatInput.value.trim();
+        if (!message) return;
+        addChatMessage(message, 'user');
+        chatInput.value = '';
+        sendButton.innerHTML = '&#8987;';
+        sendButton.disabled = true;
+        fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: message })
+        })
+        .then(r => r.json())
+        .then(data => addChatMessage(data.message, 'ai'))
+        .catch(() => addChatMessage('Sorry, I encountered an error. Please try again.', 'ai'))
+        .finally(() => { sendButton.innerHTML = '&#9654;'; sendButton.disabled = false; });
+    }
+    // Re-bind chat events
+    document.addEventListener('DOMContentLoaded', function() {
+        const chatInput = document.getElementById('chatInput');
+        const sendBtn = document.getElementById('sendChatBtn');
+        if (chatInput && sendBtn) {
+            sendBtn.addEventListener('click', sendChatMessage);
+            chatInput.addEventListener('keypress', function(e) { if (e.key === 'Enter') sendChatMessage(); });
+        }
+    });
+    if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/static/sw.js'); }
+    </script>
 </body>
 </html>
