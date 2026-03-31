@@ -45,14 +45,24 @@ python main.py
 # Open http://localhost:5080
 ```
 
-## More Products
+## More From Drake Enterprise
 
-- **AI Creator's Toolkit** ($97) — 7 video tutorials for building local AI tools: [Gumroad](https://drakeent.gumroad.com/l/fpxfxe)
-- **Full catalog:** [drakeent.gumroad.com](https://drakeent.gumroad.com/)
+Building AI tools for people who think differently.
+
+| Product | Price | Link |
+|---------|-------|------|
+| **OhananahO Starter Pack** — AI productivity bundle for ADHD creators | $40 | [Get it](https://sweepsy.gumroad.com/l/umsdf) |
+| **AI Creator's Toolkit** — 7 video tutorials, build local AI tools | $97 | [Get it](https://drakeent.gumroad.com/l/fpxfxe) |
+| **P.U.S.H. Protocol** — Love-field protocol PDF + interactive engine | $9.99 | [Get it](https://drakeent.gumroad.com/l/push-protocol) |
+| **SythAIA Prompt Architecture** — 12 reusable AI prompt templates | $27 | [Get it](https://drakeent.gumroad.com/l/sythaia) |
+| **The Ancestral Protocol** — Afro-SolPunk fiction Vol. 1 | $4.99 | [Get it](https://drakeent.gumroad.com/l/esuwaa) |
+| **Full catalog (19 products)** — AI tools, fiction, frameworks | various | [Browse](https://drakeent.gumroad.com/) |
 
 ## Built By
 
-**Drake Enterprise LLC** / [OhananahO](https://github.com/ChaiLifeOTFT)
+**Drake Enterprise LLC** / [OhananahO](https://github.com/ChaiLifeOTFT) — Nathaniel Drake
+
+> *"We build technology that is alive because we are alive building it."*
 
 ---
 
