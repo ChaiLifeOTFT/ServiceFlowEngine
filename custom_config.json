@@ -1,0 +1,26 @@
+{
+  "company_name": "Ansco Professional Cleaning",
+  "app_title": "Ansco Service Management",
+  "app_subtitle": "Task-Based Cleaning Workflow & Time Tracking",
+  "logo_path": "static/img/generic_logo.svg",
+  "primary_color": "#0d6efd",
+  "service_unit": "square feet",
+  "service_unit_abbr": "sq ft",
+  "contact_email": "info@anscocleaning.com",
+  "phone_number": "(313) 555-0199",
+  "address": "Detroit, MI",
+  "ai_assistant_name": "Ansco Assistant",
+  "ai_assistant_intro": "I help with cleaning job estimation, task management, and workflow optimization.",
+  "field_labels": {
+    "client_name": "Client Name",
+    "service_provider_name": "Cleaning Technician",
+    "job_address": "Service Address",
+    "reference_number": "Job Number",
+    "service_area_size": "Area Size",
+    "service_type": "Cleaning Type"
+  },
+  "email_templates": {
+    "job_completion_subject": "Cleaning Job Completed - {client_name}",
+    "job_completion_from": "info@anscocleaning.com"
+  }
+}
